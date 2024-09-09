@@ -33,36 +33,7 @@ df['created_time'] = pd.to_datetime(df['created_time'])
 
 # Drop all rows that have a duplicated value in the 'Employer group' column
 df = df.drop_duplicates(subset='Employer group', keep="first")
-
-# Get minimum and maximum dates for the date input
-startDate = df["created_time"].min()
-endDate = df["created_time"].max()
-
-# Create 2-column layout for date inputs
-col1, col2 = st.columns(2)
-
-# Function to display date input in styled boxes
-def display_date_input(col, title, default_date, min_date, max_date, key):
-    col.markdown(f"""
-        <div style="border-radius: 10px; text-align: left; margin: 5px;">
-            <div style="font-size: 1.2em; margin-bottom: 5px; font-weight: bold;">{title}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    return col.date_input("", default_date, min_value=min_date, max_value=max_date, key=key)
-
-# Display date inputs
-with col1:
-    date1 = display_date_input(col1, "Start Date", startDate, startDate, endDate, key="start_date")
-
-with col2:
-    date2 = display_date_input(col2, "End Date", endDate, startDate, endDate, key="end_date")
-
-# Convert dates from Streamlit date_input to datetime
-date1 = pd.to_datetime(date1).tz_localize('UTC')
-date2 = pd.to_datetime(date2).tz_localize('UTC')
-
-# Filter the DataFrame based on the selected date range
-df_filtered = df[(df["created_time"] >= date1) & (df["created_time"] <= date2)].copy()
+df_filtered = df
 
 # Sidebar styling and logo
 st.markdown("""
@@ -130,21 +101,21 @@ em_group = st.sidebar.multiselect("Select Employer group", options=sorted(df_fil
 
 ## Filter by year
 if year:
-    df = df[df['year'].isin(year)]
+    df = df_filtered[df_filtered['year'].isin(year)]
 
 # Filter by client type
 if client_type:
-    df = df[df['Client Segment'].isin(client_type)]
+    df = df_filtered[df_filtered['Client Segment'].isin(client_type)]
 
 # Filter by month
 if month:
-    df = df[df['MonthName'].isin(month)]
+    df = df_filtered[df_filtered['MonthName'].isin(month)]
 
 # Filter by engagement type
 if eng_type:
-    df = df[df['Engagement'].isin(eng_type)]
+    df = df_filtered[df_filtered['Engagement'].isin(eng_type)]
 if em_group:
-    df = df[df['Employer group'].isin(em_group)]
+    df = df_filtered[df_filtered['Employer group'].isin(em_group)]
 
 filter_description = ""
 if year:
