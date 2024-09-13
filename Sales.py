@@ -78,7 +78,7 @@ st.markdown(
 
 if page == "Home":
     st.markdown('<h1 class="main-title">EDEN CARE PROACTIV DASHBOARD</h1>', unsafe_allow_html=True)
-    st.image("image.jpeg", caption='Eden Care Medical', use_column_width=True)
+    st.image("image.png", caption='Eden Care Medical', use_column_width=True)
     st.markdown('<h2 class="subheader">Welcome to the Eden Care Medical Proactiv Dashboard</h2>', unsafe_allow_html=True)
     
     # Introduction
