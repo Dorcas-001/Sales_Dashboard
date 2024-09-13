@@ -279,6 +279,15 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True, height=200)
 
+    ccl1, ccl2 =st.columns(2)
+
+    with ccl1:
+        with st.expander("Clients Lives Covered Data"):
+            st.write(df[['Client Name', 'Total lives']].style.background_gradient(cmap="YlOrBr"))
+    with ccl2:
+        with st.expander("Total Lives by Channel Data"):
+            st.write(df[['Total lives', 'Intermediary']].style.background_gradient(cmap="YlOrBr"))
+
     cl1, cl2 =st.columns(2)
 
         # Calculate the total insured premium by client segment
@@ -299,6 +308,7 @@ if not filtered_df.empty:
 
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
+
 
 # Define the correct order for the months
     month_order = ["January", "February", "March", "April", "May", "June", 
@@ -351,7 +361,16 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.markdown('<h2 class="custom-subheader">Monthly Count of Principal Members and Dependents</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_counts, use_container_width=True)
-        
+    
+    ccls1, ccls2 =st.columns(2)
+
+    with ccls2:
+        with st.expander("Principal Members and Dependents Distribution Data"):
+            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
+    with ccls1:
+        with st.expander("Total lives by Client Sement Data"):
+            st.write(df[['Total lives', 'Client Segment']].style.background_gradient(cmap="YlOrBr"))
+
     cls1, cls2 = st.columns(2)
     
     # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
@@ -449,3 +468,21 @@ if not filtered_df.empty:
 
     st.markdown('<h2 class="custom-subheader">Total Lives Over Time</h2>', unsafe_allow_html=True)
     st.plotly_chart(fig2, use_container_width=True)
+
+    st.markdown('<h3 class="custom-subheader">Month-Wise Lives Distribution By Client Segment Table</h3>', unsafe_allow_html=True)
+
+    with st.expander("Summary_Table"):
+
+        colors = ["#527853", "#F9E8D9", "#F7B787", "#EE7214", "#B99470"]
+        custom_cmap = mcolors.LinearSegmentedColormap.from_list("EarthyPalette", colors)
+        # Create the pivot table
+        sub_specialisation_Year = pd.pivot_table(
+            data=filtered_df,
+            values="Total lives",
+            index=["Client Segment"],
+            columns="Start Date Month"
+        )
+        st.write(sub_specialisation_Year.style.background_gradient(cmap="YlOrBr"))
+        
+else:
+    st.error("No data available for this selection")

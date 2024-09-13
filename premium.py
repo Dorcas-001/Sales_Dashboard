@@ -268,6 +268,8 @@ if not filtered_df.empty:
     int_premiums = filtered_df.groupby("Intermediary")["Total insured Premium"].sum().reset_index()
     int_premiums.columns = ["Intermediary", "Total insured Premium"]
 
+    
+
     with cols2:
         # Display the header
         st.markdown('<h2 class="custom-subheader">YTD Total Insured Premium by Channel</h2>', unsafe_allow_html=True)
@@ -283,6 +285,15 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True, height=200)
 
+    ccl1, ccl2 =st.columns(2)
+
+    with ccl1:
+        with st.expander("Clients Basic Premuim Data"):
+            st.write(df[['Client Name', 'Basic Premium']].style.background_gradient(cmap="YlOrBr"))
+    with ccl2:
+        with st.expander("Insured Premium by Channel Data"):
+            st.write(df[['Total insured Premium', 'Intermediary']].style.background_gradient(cmap="YlOrBr"))
+
     cl1, cl2 =st.columns(2)
 
         # Calculate the total insured premium by client segment
@@ -291,7 +302,7 @@ if not filtered_df.empty:
 
     with cl1:    
         # Display the header
-        st.markdown('<h2 class="custom-subheader">YTD Total Insured Premium by Channel</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="custom-subheader">YTD Total Insured Premium by Client Segment</h2>', unsafe_allow_html=True)
 
         # Define custom colors
         custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
@@ -346,6 +357,16 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.markdown('<h2 class="custom-subheader">Total Basic Premium Monthly</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
+
+    ccls1, ccls2 =st.columns(2)
+
+    with ccls2:
+        with st.expander("Clients Insured Premuim Data"):
+            st.write(df[['Client Name', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
+    with ccls1:
+        with st.expander("Insured Premium by Client Sement Data"):
+            st.write(df[['Total insured Premium', 'Client Segment']].style.background_gradient(cmap="YlOrBr"))
+
 
     cls1, cls2 = st.columns(2)
 
@@ -532,3 +553,21 @@ if not filtered_df.empty:
 
     st.markdown('<h2 class="custom-subheader">Basic Premium and Total Insured Premium Over Time</h2>', unsafe_allow_html=True)
     st.plotly_chart(fig2, use_container_width=True)
+
+    st.markdown('<h3 class="custom-subheader">Month-Wise Insured Premium By Client Segment Table</h2>', unsafe_allow_html=True)
+
+    with st.expander("Summary_Table"):
+
+        colors = ["#527853", "#F9E8D9", "#F7B787", "#EE7214", "#B99470"]
+        custom_cmap = mcolors.LinearSegmentedColormap.from_list("EarthyPalette", colors)
+        # Create the pivot table
+        sub_specialisation_Year = pd.pivot_table(
+            data=filtered_df,
+            values="Total insured Premium",
+            index=["Client Segment"],
+            columns="Start Date Month"
+        )
+        st.write(sub_specialisation_Year.style.background_gradient(cmap="YlOrBr"))
+        
+else:
+    st.error("No data available for this selection")
