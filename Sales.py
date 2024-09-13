@@ -77,12 +77,12 @@ st.markdown(
 )
 
 if page == "Home":
-    st.markdown('<h1 class="main-title">EDEN CARE PROACTIV DASHBOARD</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">EDEN CARE SALES DASHBOARD</h1>', unsafe_allow_html=True)
     st.image("image.png", caption='Eden Care Medical', use_column_width=True)
-    st.markdown('<h2 class="subheader">Welcome to the Eden Care Medical Proactiv Dashboard</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="subheader">Welcome to the Eden Care Sales Dashboard</h2>', unsafe_allow_html=True)
     
     # Introduction
-    st.markdown('<div class="text">These dashboards are designed to provide insights into the ProActiv product of our Company. It involves both the physical and mental health wellness part of the product. The dashboard is divided into distinct sections, each focusing on a specific process. These sections provide in-depth visual representations and analytical insights, aimed at streamlining the operations and elevating the overall customer experience.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="text">Welcome to the Sales Dashboard! This comprehensive tool provides a clear and insightful overview of our sales performance across three key areas: <strong>Closed Sales, Lives, and Prospective Sales </strong>. The <strong>Closed Sales dashboard</strong> details successful deals and revenue generated, helping identify trends and high-performing teams. The <strong>Lives Dashboard</strong> tracks the number of individuals covered under our plans, offering insights into our market reach and effectiveness. The <strong>Prospective Sales</strong> section monitors potential sales opportunities, aiding in lead prioritization and resource allocation. Together, these dashboards enable stakeholders to make informed decisions, optimize strategies, and drive business success.</div>', unsafe_allow_html=True)
     st.markdown('<div class="separator"></div>', unsafe_allow_html=True)
 
     # User Instructions
