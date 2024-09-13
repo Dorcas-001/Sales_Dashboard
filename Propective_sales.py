@@ -269,24 +269,26 @@ if not df.empty:
         # Display the chart in Streamlit
         st.markdown('<h2 class="custom-subheader">Top 10 Employer Groups by Employee Size</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_employer_groups, use_container_width=True)
+    # Drop rows with nan values in 'Client Segment' column
+    filtered_data = data.dropna(subset=['Client Segment'])
 
-        # Count occurrences of each client segment
-    client_segment_counts = df['Client Segment'].value_counts().reset_index()
+    # Count occurrences of each client segment
+    client_segment_counts = filtered_data['Client Segment'].value_counts().reset_index()
     client_segment_counts.columns = ['Client Segment', 'Count']
 
     with cols2:
-        st.markdown('<h2 class="custom-subheader">Client Segments Distribution</h2>', unsafe_allow_html=True)
-        
         # Define custom colors
         custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
-        
+
         # Create a pie chart
-        fig = px.pie(client_segment_counts, names="Client Segment", values="Count", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig = px.pie(client_segment_counts, names='Client Segment', values='Count', hole=0.5,
+                    color_discrete_sequence=custom_colors)
         fig.update_traces(textposition='outside', textinfo='percent+label')
         fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
-        
+
         # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True, height=200)
+        st.markdown('<h2 class="custom-subheader">Client Segments Distribution</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True)
 
  # Group data by "Start Date Month" and "Client Segment" and sum the Total Insured Premium
     monthly_premium = data.groupby(['Employer group', 'Client Segment'])['RWF Value'].sum().unstack().fillna(0)
@@ -338,8 +340,10 @@ if not df.empty:
 
     cls1, cls2 = st.columns(2)
     with cls1:
+        filtered_data = data.dropna(subset=['Engagement'])
+
         # Count the occurrences of each engagement type
-        engagement_counts = df['Engagement'].value_counts().reset_index()
+        engagement_counts = filtered_data['Engagement'].value_counts().reset_index()
         engagement_counts.columns = ['Engagement', 'Count']
 
         # Display the header
@@ -378,15 +382,9 @@ if not df.empty:
         st.plotly_chart(fig_product, use_container_width=True, height=200)
         
 
-        with st.expander("Product Type Data"):
-            st.write(product_counts.style.background_gradient(cmap="YlOrBr"))
-
-
     ccl1, ccl2 = st.columns(2)
    
-    with ccl1:
-        with st.expander("Engagement Type Data"):
-            st.write(engagement_counts.style.background_gradient(cmap="YlOrBr"))
+    
 
         # Count values for Priority and Status
     priority_counts = df['Priority'].value_counts().reset_index()
