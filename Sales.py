@@ -96,7 +96,7 @@ if page == "Home":
 
     
 
-elif page == "Overview Metric View":
+elif page == "Overview":
     exec(open("overview.py").read())
 elif page == "Channel View":
     exec(open("intermediary.py").read())
