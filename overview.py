@@ -221,12 +221,12 @@ if not filtered_df.empty:
         }
         .metric-title {
             color: #e66c37; /* Change this color to your preferred title color */
-            font-size: 0.9em;
+            font-size: 1em;
             margin-bottom: 10px;
         }
         .metric-value {
             color: #009DAE;
-            font-size: 1.2em;
+            font-size: 1.5em;
         }
         .tooltip {
             visibility: hidden;
