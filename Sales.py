@@ -18,7 +18,7 @@ st.set_page_config(
 logo_url = 'EC_logo.png'  
 st.sidebar.image(logo_url, use_column_width=True)
 
-page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Overview Metric View", "Channel View"])
+page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Overview", "Channel View"])
 
 st.markdown(
     """
