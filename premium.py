@@ -136,7 +136,7 @@ if not filtered_df.empty:
     total_in_pre_scaled = total_in_pre / scaling_factor
 
     # Create 4-column layout for metric cards
-    col1, col2 = st.columns(2)
+    col1, col2, col3, col4 = st.columns(4)
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -160,12 +160,12 @@ if not filtered_df.empty:
         }
         .metric-title {
             color: #e66c37; /* Change this color to your preferred title color */
-            font-size: 1.2em;
+            font-size: 1em;
             margin-bottom: 10px;
         }
         .metric-value {
             color: #009DAE;
-            font-size: 2em;
+            font-size: 1.5em;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -183,6 +183,10 @@ if not filtered_df.empty:
     # Display metrics
     display_metric(col1, "Total Basic Premuim", f"RWF {total_pre_scaled:.0f}M")
     display_metric(col2, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col3, "Total Lives", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col4, "Total Lives", f"RWF {total_in_pre_scaled:.0f} M")
+
+
    
     # Sidebar styling and logo
     st.markdown("""
@@ -315,48 +319,69 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-# Define the correct order for the months
-    month_order = ["January", "February", "March", "April", "May", "June", 
-               "July", "August", "September", "October", "November", "December"]
 
-# Convert "Start Date Month" to a categorical type with the specified order
-    filtered_df['Start Date Month'] = pd.Categorical(filtered_df['Start Date Month'], categories=month_order, ordered=True)
-
-    # Group data by month and sum the Basic Premium
-    monthly_premium = filtered_df.groupby('Start Date Month')['Basic Premium'].sum().reset_index()
+    # Group data by START DATE and sum the Basic Premium
+    daily_premium = filtered_df.groupby(['START DATE', 'Start Date Month'])['Basic Premium'].sum().reset_index()
 
     # Custom function to format the values
     def format_premium(value):
         return f"RWF {value / 1e6:.0f} M"
 
-    # Apply the custom function to format the text
-    monthly_premium['Formatted Premium'] = monthly_premium['Basic Premium'].apply(format_premium)
+    daily_premium['Formatted Premium'] = daily_premium['Basic Premium'].apply(format_premium)
+    
     with cl2:
-        # Create the bar chart
-        fig_monthly_premium = go.Figure()
+        # Create slider steps
+        months = daily_premium['Start Date Month'].unique()
+        steps = []
+        for month in months:
+            step = dict(
+                method='update',
+                args=[{'visible': [True]}],
+                label=month
+            )
+            # Filter data by month
+            month_data = daily_premium[daily_premium['Start Date Month'] == month]
+            step['args'][0]['x'] = [month_data['START DATE']]
+            step['args'][0]['y'] = [month_data['Basic Premium']]
+            step['args'][0]['text'] = [month_data['Formatted Premium']]
+            steps.append(step)
 
-        fig_monthly_premium.add_trace(go.Bar(
-            x=monthly_premium['Start Date Month'],
-            y=monthly_premium['Basic Premium'],
+        # Create sliders
+        sliders = [dict(
+            active=0,
+            currentvalue={'prefix': 'Month: '},
+            pad={'t': 50},
+            steps=steps
+        )]
+
+        # Create the bar chart
+        fig_daily_premium = go.Figure()
+
+        fig_daily_premium.add_trace(go.Bar(
+            x=daily_premium['START DATE'],
+            y=daily_premium['Basic Premium'],
             marker=dict(color='#009DAE'),
-            text=monthly_premium['Formatted Premium'],
+            text=daily_premium['Formatted Premium'],
             textposition='outside',
             textfont=dict(color='black'),
             hoverinfo='y+x'
         ))
 
-        fig_monthly_premium.update_layout(
-            xaxis_title="Month",
-            yaxis_title="Total Basic Premium",
+        fig_daily_premium.update_layout(
+            xaxis_title='Date',
+            yaxis_title='Total Basic Premium',
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50)
+            margin=dict(l=0, r=0, t=30, b=50),
+            sliders=sliders
         )
 
-        # Display the chart in Streamlit
+        # Streamlit layout
         st.markdown('<h2 class="custom-subheader">Total Basic Premium Monthly</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig_monthly_premium, use_container_width=True)
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig_daily_premium, use_container_width=True)
 
     ccls1, ccls2 =st.columns(2)
 
@@ -424,6 +449,7 @@ if not filtered_df.empty:
 
     # Define custom colors
     custom_colors = ["#006E7F", "#e66c37", "#B4B4B8", "#f8a785"]
+
     with cls2:
         # Create the stacked bar chart
         fig_monthly_premium = go.Figure()
@@ -454,71 +480,126 @@ if not filtered_df.empty:
         st.markdown('<h2 class="custom-subheader">Total Insured Premium Monthly</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
-    clu1, clu2 =  st.columns(2)
- # Group by 'START DATE'
-    date_total_premium = data.groupby('Start Date Month')['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
-    date_total_lives = data.groupby('Start Date Month')['Total lives'].sum().reset_index(name='Total lives')
+
+    clu1, clu2 = st.columns(2)
+
+    # Group by 'START DATE'
+    date_total_premium = filtered_df.groupby(['START DATE', 'Start Date Month'])['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
+    date_total_lives = filtered_df.groupby(['START DATE', 'Start Date Month'])['Total lives'].sum().reset_index(name='Total lives')
 
     # Merge the premium and lives data
-    merged_data = pd.merge(date_total_premium, date_total_lives, on='Start Date Month')
+    merged_data = pd.merge(date_total_premium, date_total_lives, on=['START DATE', 'Start Date Month'])
 
+    # Create slider steps
+    months = merged_data['Start Date Month'].unique()
+    steps = []
+    for month in months:
+        step = dict(
+            method='update',
+            args=[{'visible': [True, True]}],
+            label=month
+        )
+        month_data = merged_data[merged_data['Start Date Month'] == month]
+        step['args'][0]['x'] = [month_data['START DATE']]
+        step['args'][0]['y'] = [month_data['Total Insured Premium'], month_data['Total lives']]
+        steps.append(step)
+
+    # Create sliders
+    sliders = [dict(
+        active=0,
+        currentvalue={'prefix': 'Month: '},
+        pad={'t': 50},
+        steps=steps
+    )]
     with clu1:
         # Create the dual-axis chart
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        # Add traces
+        # Add traces as area charts
         fig.add_trace(
-            go.Bar(x=merged_data['Start Date Month'], y=merged_data['Total Insured Premium'], name="Total Insured Premium", marker_color='#009DAE'),
+            go.Scatter(x=merged_data['START DATE'], y=merged_data['Total Insured Premium'], 
+                    name="Total Insured Premium", line=dict(color='#009DAE'), fill='tozeroy'),
             secondary_y=False,
         )
 
         fig.add_trace(
-            go.Scatter(x=merged_data['Start Date Month'], y=merged_data['Total lives'], name="Total lives", line=dict(color='#ff7f0e')),
+            go.Scatter(x=merged_data['START DATE'], y=merged_data['Total lives'], 
+                    name="Total lives", line=dict(color='#ff7f0e'), fill='tozeroy'),
             secondary_y=True,
         )
 
-        # Set x-axis title
-        fig.update_xaxes(title_text="Month")
+        # Set x-axis title and type
+        fig.update_xaxes(title_text="Date", type='date')
 
         # Set y-axes titles
         fig.update_yaxes(title_text="Annual Premium in RWF", secondary_y=False)
         fig.update_yaxes(title_text="Lives Covered", secondary_y=True)
 
+        # Add sliders to the figure
+        fig.update_layout(sliders=sliders)
+
         st.markdown('<h2 class="custom-subheader">Total Premium By Total Lives</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     # Group by 'Client'
-    client_total_premium = data.groupby('Start Date Month')['Average Premium per Principal Member'].sum().reset_index(name='Average Premium per Principal Member')
-    client_total_lives = data.groupby('Start Date Month')['No. of Principal Member'].sum().reset_index(name='No. of Principal Member')
+    client_total_premium = data.groupby(['START DATE', 'Start Date Month'])['Average Premium per Principal Member'].sum().reset_index(name='Average Premium per Principal Member')
+    client_total_lives = data.groupby(['START DATE', 'Start Date Month'])['No. of Principal Member'].sum().reset_index(name='No. of Principal Member')
 
     # Merge the premium and lives data
-    merged_data = pd.merge(client_total_premium, client_total_lives, on='Start Date Month')
+    merged_data = pd.merge(client_total_premium, client_total_lives, on=['START DATE', 'Start Date Month'])
+
+    # Create slider steps for the second chart
+    steps = []
+    for month in months:
+        step = dict(
+            method='update',
+            args=[{'visible': [True, True]}],
+            label=month
+        )
+        month_data = merged_data[merged_data['Start Date Month'] == month]
+        step['args'][0]['x'] = [month_data['START DATE'], month_data['START DATE']]
+        step['args'][0]['y'] = [month_data['Average Premium per Principal Member'], month_data['No. of Principal Member']]
+        steps.append(step)
+
+    # Create sliders for the second chart
+    sliders = [dict(
+        active=0,
+        currentvalue={'prefix': 'Month: '},
+        pad={'t': 50},
+        steps=steps
+    )]
+
 
     with clu2:
         # Create the dual-axis chart
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        # Add traces
+        # Add traces as area charts
         fig.add_trace(
-            go.Bar(x=merged_data['Start Date Month'], y=merged_data['Average Premium per Principal Member'], name="Average Premium per Principal Member", marker_color='#009DAE'),
+            go.Scatter(x=merged_data['START DATE'], y=merged_data['Average Premium per Principal Member'], 
+                    name="Average Premium per Principal Member", line=dict(color='#009DAE'), fill='tozeroy'),
             secondary_y=False,
         )
 
         fig.add_trace(
-            go.Scatter(x=merged_data['Start Date Month'], y=merged_data['No. of Principal Member'], name="No. of Principal Member", line=dict(color='#ff7f0e')),
+            go.Scatter(x=merged_data['START DATE'], y=merged_data['No. of Principal Member'], 
+                    name="No. of Principal Member", line=dict(color='#ff7f0e'), fill='tozeroy'),
             secondary_y=True,
         )
 
-        # Set x-axis title
-        fig.update_xaxes(title_text="Month")
+        # Set x-axis title and type
+        fig.update_xaxes(title_text="Date", type='date')
 
         # Set y-axes titles
         fig.update_yaxes(title_text="Average Premium per Principal Member", secondary_y=False)
         fig.update_yaxes(title_text="No. of Principal Member", secondary_y=True)
-    
+
+        # Add sliders to the figure
+        fig.update_layout(sliders=sliders)
+
         st.markdown('<h2 class="custom-subheader">Average Premium By Principal Member</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
-                
+        
 
     # Group by day and sum the values
     area_chart_basic_premium = filtered_df.groupby(filtered_df["START DATE"].dt.strftime("%Y-%m-%d"))['Basic Premium'].sum().reset_index(name='Total Basic Premium')
@@ -568,6 +649,8 @@ if not filtered_df.empty:
             columns="Start Date Month"
         )
         st.write(sub_specialisation_Year.style.background_gradient(cmap="YlOrBr"))
+    
+
         
 else:
     st.error("No data available for this selection")

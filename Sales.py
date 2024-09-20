@@ -18,7 +18,7 @@ st.set_page_config(
 logo_url = 'EC_logo.png'  
 st.sidebar.image(logo_url, use_column_width=True)
 
-page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Premium", "Lives", "Prospective Sales"])
+page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Overview", "Channel View"])
 
 st.markdown(
     """
@@ -96,9 +96,7 @@ if page == "Home":
 
     
 
-elif page == "Premium":
-    exec(open("premium.py").read())
-elif page == "Lives":
-    exec(open("lives.py").read())
-elif page == "Prospective Sales":
-    exec(open("Propective_sales.py").read())
+elif page == "Overview":
+    exec(open("overview.py").read())
+elif page == "Channel View":
+    exec(open("intermediary.py").read())
