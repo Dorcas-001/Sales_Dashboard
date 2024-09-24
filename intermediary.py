@@ -250,50 +250,45 @@ if not filtered_df.empty:
         """, unsafe_allow_html=True)
 
 
-
     colc1, colc2 = st.columns(2)
+
     # Group by day and intermediary, then sum the Total Insured Premium
     area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Intermediary'])['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
 
     # Sort by the START DATE
     area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
 
-    custom_colors = ["#006E7F", "#e66c37", "red"]
+    custom_colors_insured = ["brown", "#e66c37", "#009DAE"]
+
     with colc1:
-        # Create the area chart
-        fig2 = go.Figure()
+        # Create the area chart for Total Insured Premium
+        fig1, ax1 = plt.subplots()
 
-        # Add traces for each intermediary with custom colors
-        for i, intermediary in enumerate(area_chart_total_insured['Intermediary'].unique()):
-            intermediary_data = area_chart_total_insured[area_chart_total_insured['Intermediary'] == intermediary]
-            fig2.add_trace(
-                go.Scatter(
-                    x=intermediary_data['START DATE'], 
-                    y=intermediary_data['Total Insured Premium'], 
-                    mode='lines', 
-                    name=intermediary,
-                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
-                    fill='tozeroy'  # Fill to the x-axis
-                )
-            )
+        # Pivot the DataFrame for easier plotting
+        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Intermediary', values='Total Insured Premium').fillna(0)
+        
+        # Plot the stacked area chart
+        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors_insured[:len(pivot_df_insured.columns)])
 
+
+        # Remove the border around the chart
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
+        
         # Set x-axis title
-        fig2.update_xaxes(title_text="Date", tickangle=45)  
+        ax1.set_xlabel("Date", fontsize=12)
+        plt.xticks(rotation=45)
 
         # Set y-axis title
-        fig2.update_yaxes(title_text="Total Insured Premium")
+        ax1.set_ylabel("Total Insured Premium", fontsize=12)
 
-        # Set chart title and layout
-        fig2.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Total Insured Premium",
-            font=dict(color='Black'),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
+        # Set chart title
+        st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel over Time</h2>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel Over Time</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig2, use_container_width=True)
+        st.pyplot(fig1)
 
 
     # Group by day and intermediary, then sum the Total Lives
@@ -302,44 +297,36 @@ if not filtered_df.empty:
     # Sort by the START DATE
     area_chart_total_lives = area_chart_total_lives.sort_values("START DATE")
 
-    custom_colors = ["#006E7F", "#e66c37", "red"]
 
     with colc2:
-        # Create the area chart
-        fig2 = go.Figure()
+        # Create the area chart for Total Lives
+        fig2, ax2 = plt.subplots()
 
-        # Add traces for each intermediary with custom colors
-        for i, intermediary in enumerate(area_chart_total_lives['Intermediary'].unique()):
-            intermediary_data = area_chart_total_lives[area_chart_total_lives['Intermediary'] == intermediary]
-            fig2.add_trace(
-                go.Scatter(
-                    x=intermediary_data['START DATE'], 
-                    y=intermediary_data['Total lives'], 
-                    mode='lines', 
-                    name=intermediary,
-                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
-                    fill='tozeroy'  # Fill to the x-axis
-                )
-            )
+        # Pivot the DataFrame for easier plotting
+        pivot_df_lives = area_chart_total_lives.pivot(index='START DATE', columns='Intermediary', values='Total lives').fillna(0)
+        
+        # Plot the stacked area chart
+        pivot_df_lives.plot(kind='area', stacked=True, ax=ax2, color=custom_colors_insured[:len(pivot_df_lives.columns)])
 
+
+        # Remove the border around the chart
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        ax2.spines['left'].set_visible(False)
+        ax2.spines['bottom'].set_visible(False)
+        
         # Set x-axis title
-        fig2.update_xaxes(title_text="Date", tickangle=45)  
+        ax2.set_xlabel("Date", fontsize=12)
+        plt.xticks(rotation=45)
 
         # Set y-axis title
-        fig2.update_yaxes(title_text="Total Lives Covered")
+        ax2.set_ylabel("Total Lives Covered", fontsize=12)
 
-        # Set chart title and layout
-        fig2.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Total Lives Covered",
-            font=dict(color='Black'),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
+        # Set chart title
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Channel over Time</h2>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Channel Over Time</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig2, use_container_width=True)
-
+        st.pyplot(fig2)
 
     cols1,cols2 = st.columns(2)
 

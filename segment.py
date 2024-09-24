@@ -93,7 +93,7 @@ df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
 st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
 month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Date Month'].dropna().unique()))
-channel = st.sidebar.multiselect("Select Channel", options=df['Client Segment'].unique())
+segment = st.sidebar.multiselect("Select Channel", options=df['Client Segment'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 # Filtered DataFrame
@@ -104,8 +104,8 @@ if year:
     filtered_df = filtered_df[filtered_df['Start Date Year'].isin(year)]
 if month:
     filtered_df = filtered_df[filtered_df['Start Date Month'].isin(month)]
-if channel:
-    filtered_df = filtered_df[filtered_df['Client Segment'].isin(channel)]
+if segment:
+    filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
 if client_name:
     filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
 
@@ -114,8 +114,8 @@ if client_name:
 filter_description = ""
 if year:
     filter_description += f"{', '.join(map(str, year))} "
-if channel:
-    filter_description += f"{', '.join(map(str, channel))} "
+if segment:
+    filter_description += f"{', '.join(map(str, segment))} "
 if month:
     filter_description += f"{', '.join(month)} "
 if client_name:
@@ -256,14 +256,14 @@ if not filtered_df.empty:
         fig2 = go.Figure()
 
         # Add traces for each Client Segment with custom colors
-        for i, Client Segment in enumerate(area_chart_total_insured['Client Segment'].unique()):
-            Client Segment_data = area_chart_total_insured[area_chart_total_insured['Client Segment'] == Client Segment]
+        for i, Client_Segment in enumerate(area_chart_total_insured['Client Segment'].unique()):
+            Client_Segment_data = area_chart_total_insured[area_chart_total_insured['Client Segment'] == Client_Segment]
             fig2.add_trace(
                 go.Scatter(
-                    x=Client Segment_data['START DATE'], 
-                    y=Client Segment_data['Total Insured Premium'], 
+                    x=Client_Segment_data['START DATE'], 
+                    y=Client_Segment_data['Total Insured Premium'], 
                     mode='lines', 
-                    name=Client Segment,
+                    name=Client_Segment,
                     line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
                     fill='tozeroy'  # Fill to the x-axis
                 )
@@ -301,14 +301,14 @@ if not filtered_df.empty:
         fig2 = go.Figure()
 
         # Add traces for each Client Segment with custom colors
-        for i, Client Segment in enumerate(area_chart_total_lives['Client Segment'].unique()):
-            Client Segment_data = area_chart_total_lives[area_chart_total_lives['Client Segment'] == Client Segment]
+        for i, Client_Segment in enumerate(area_chart_total_lives['Client Segment'].unique()):
+            Client_Segment_data = area_chart_total_lives[area_chart_total_lives['Client Segment'] == Client_Segment]
             fig2.add_trace(
                 go.Scatter(
-                    x=Client Segment_data['START DATE'], 
-                    y=Client Segment_data['Total lives'], 
+                    x=Client_Segment_data['START DATE'], 
+                    y=Client_Segment_data['Total lives'], 
                     mode='lines', 
-                    name=Client Segment,
+                    name=Client_Segment,
                     line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
                     fill='tozeroy'  # Fill to the x-axis
                 )
@@ -345,11 +345,11 @@ if not filtered_df.empty:
         # Create the grouped bar chart
         fig_yearly_avg_premium = go.Figure()
 
-        for idx, Client Segment in enumerate(yearly_avg_premium.columns):
+        for idx, Client_Segment in enumerate(yearly_avg_premium.columns):
             fig_yearly_avg_premium.add_trace(go.Bar(
                 x=yearly_avg_premium.index,
-                y=yearly_avg_premium[Client Segment],
-                name=Client Segment,
+                y=yearly_avg_premium[Client_Segment],
+                name=Client_Segment,
                 textposition='inside',
                 textfont=dict(color='white'),
                 hoverinfo='x+y+name',
@@ -417,11 +417,11 @@ if not filtered_df.empty:
 
         fig_monthly_premium = go.Figure()
 
-        for idx, Client Segment in enumerate(monthly_premium.columns):
+        for idx, Client_Segment in enumerate(monthly_premium.columns):
             fig_monthly_premium.add_trace(go.Bar(
                 x=monthly_premium.index,
-                y=monthly_premium[Client Segment],
-                name=Client Segment,
+                y=monthly_premium[Client_Segment],
+                name=Client_Segment,
                 textposition='inside',
                 textfont=dict(color='white'),
                 hoverinfo='x+y+name',
@@ -523,12 +523,12 @@ if not filtered_df.empty:
 
         # Add bars for each Client Segment
     for idx, Client_Segment in enumerate(client_df['Client Segment'].unique()):
-            Client_Segment_data = client_df[client_df['Client Segment'] == Client Segment]
+            Client_Segment_data = client_df[client_df['Client Segment'] == Client_Segment]
             fig.add_trace(go.Bar(
-                x=Client Segment_data['Client Name'],
-                y=Client Segment_data['Total insured Premium'],
-                name=Client Segment,
-                text=[f'{value/1e6:.0f}M' for value in Client Segment_data['Total insured Premium']],
+                x=Client_Segment_data['Client Name'],
+                y=Client_Segment_data['Total insured Premium'],
+                name=Client_Segment,
+                text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total insured Premium']],
                 textposition='auto',
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
