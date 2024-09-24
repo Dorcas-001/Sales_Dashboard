@@ -1,3 +1,4 @@
+
 import streamlit as st
 import matplotlib.colors as mcolors
 import plotly.express as px
@@ -271,21 +272,35 @@ if not filtered_df.empty:
             </div>
             """, unsafe_allow_html=True)
 
-    st.markdown('<h2 class="custom-subheader">For Closed Sales</h2>', unsafe_allow_html=True)    
+
+
+    st.markdown('<h2 class="custom-subheader">For Prospective Sales</h2>', unsafe_allow_html=True)    
+
+    df_closed = pd.read_excel("sales Data.xlsx")
+    filtered_df = df_closed
+
+    total_clients = filtered_df["Employer group"].nunique()
+    total_lives = filtered_df["Employee Size"].sum()
+    total_in_val = filtered_df["RWF Value"].sum()
+    average_pre_per_life = filtered_df["RWF Value"].mean()
+    gwp_average = total_clients * total_lives * average_pre_per_life
+    total_items = len(filtered_df)
+    closed_items = len(filtered_df[filtered_df['Status'] == 'Closed 💪'])
+    percentage_closed = (closed_items / total_items) * 100
+
+    total_val_scaled = total_pre / scaling_factor
+    average_pre_scaled = average_pre_per_life/scaling_factor
+    gwp_average_scaled = gwp_average/scaled
 
 
     # Display metrics
-    col1, col2, col3, col4 = st.columns(4)
-    display_metric(col1, "Total Clients", total_clients, "The total number of clients.")
-    display_metric(col2, "Total Basic Premium", f"RWF {total_pre_scaled:.0f} M", "The total basic premium in millions of RWF.")
-    display_metric(col3, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M", "The total insured premium in millions of RWF.")
-    display_metric(col4, "Total Lives", total_lives, "The total number of lives covered (Number of pricipal members + Dependents).")
-    display_metric(col1, "Total Principal Members", total_mem, "The total number of principal members.")
-    display_metric(col2, "Total Dependents", total_dependents, "The total number of dependents.")
-    display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}", "The average number of dependents per principal member.")
-    display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M", "The average insured premium per principal member in millions of RWF.")
-    display_metric(col1, "Average GWP", f"RWF {gwp_average_scaled:.0f} B", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
-    display_metric(col2, "Dependency Ratio", f"{dependency_ratio:.1f}", "The ratio of dependents to principal members. this shows that for every 8 dependents, there are 10 principal members ")
+    cols1, cols2, cols3 = st.columns(3)
+    display_metric(cols1, "Total Clients", total_clients, "The total number of potential clients.")
+    display_metric(cols2, "Total Premium", f"RWF {total_val_scaled:.0f} M", "The total expected premium in millions of RWF.")
+    display_metric(cols3, "Estimated Lives Covered", total_lives, "The total number of lives covered depending on the employee size.")
+    display_metric(cols1, "Average Estimated Premium", f"RWF {average_pre_scaled:.0f}M", "The average estimated premium per life in millions of RWF.")
+    display_metric(cols2, "Average GWP", f"RWF {gwp_average_scaled:.0f} B", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
+    display_metric(cols3, "Percentage Closed", f"{percentage_closed : .1f} %", "The percentage of propective sales that have been closed.")
 
 
-    
+
