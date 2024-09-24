@@ -128,20 +128,26 @@ if not filter_description:
 if not filtered_df.empty:
      # Calculate metrics
     scaling_factor = 1_000_000  # For millions
+    scale = 1_000
 
     total_pre = filtered_df["Basic Premium"].sum()
     total_in_pre = filtered_df["Total insured Premium"].sum()
     total_lives = filtered_df["Total lives"].sum()
     average_premium_per_life = filtered_df["Total insured Premium"].mean()
+    # Calculate overall minimum, maximum, and median premiums
+    overall_min = filtered_df['Total insured Premium'].min()
+    overall_max = filtered_df['Total insured Premium'].max()
 
 
     # Scale the sums
+    overall_max_scaled = overall_max/scaling_factor
+    overall_min_scaled = overall_min/scale
     total_pre_scaled = total_pre / scaling_factor
     total_in_pre_scaled = total_in_pre / scaling_factor
     average_pre_scaled = average_premium_per_life/scaling_factor
 
     # Create 4-column layout for metric cards
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -189,7 +195,9 @@ if not filtered_df.empty:
     display_metric(col1, "Total Basic Premuim", f"RWF {total_pre_scaled:.0f}M")
     display_metric(col2, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col3, "Total Lives", total_lives)
-    display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
+    display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
+    display_metric(col2, "Maximum Premium", f"RWF {overall_max_scaled:.0f}M")
+    display_metric(col3, "Minimum Premium", f"RWF {overall_min_scaled:.0f} K")
 
 
 
@@ -372,11 +380,93 @@ if not filtered_df.empty:
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
-    # Calculate the total insured premium by intermediary
+    # Calculate the IQR for each year
+    iqr_data = filtered_df.groupby(['Start Date Year'])['Total insured Premium'].describe(percentiles=[.25, .5, .75])
+
+    # Define custom colors
+    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+
+    with cols2:
+        # Create the box plot
+        fig_iqr = go.Figure()
+
+        for idx, year in enumerate(filtered_df['Start Date Year'].unique()):
+            year_data = filtered_df[filtered_df['Start Date Year'] == year]
+            
+            fig_iqr.add_trace(go.Box(
+                x=year_data['Start Date Year'],
+                y=year_data['Total insured Premium'],
+                name=str(year),
+                boxmean='sd',  # Shows mean and standard deviation
+                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+            ))
+
+        fig_iqr.update_layout(
+            xaxis_title="Start Date Year",
+            yaxis_title="Total Insured Premium",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+            height=450,
+            legend=dict(
+                orientation="h",  # Horizontal legend
+                yanchor="bottom",
+                y=1.05,  # Adjust y position to move legend down
+                xanchor="center",
+                x=0.5
+            )
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Interquartile Range of Insured Premium by Year</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_iqr, use_container_width=True)
+
+
+
+   
+
+    
+   
+    ccl1, ccl2 = st.columns(2)
+    with ccl1:
+        with st.expander("Yearly Average Insured Premium by Intermediary"):
+            st.dataframe(yearly_avg_premium.style.format(precision=2))
+    
+    # Function to find the closest client to a given value
+    def find_closest_client(df, value):
+        return df.iloc[(df['Total insured Premium'] - value).abs().argsort()[:1]]['Client Name'].values[0]
+
+    with ccl2:
+        with st.expander("Client Names with Q1, Median, and Q3 Premiums by Intermediary"):
+            for (year, intermediary), group in filtered_df.groupby(['Start Date Year', 'Intermediary']):
+                q1 = group['Total insured Premium'].quantile(0.25)
+                median = group['Total insured Premium'].median()
+                q3 = group['Total insured Premium'].quantile(0.75)
+
+                q1_client = find_closest_client(group, q1)
+                median_client = find_closest_client(group, median)
+                q3_client = find_closest_client(group, q3)
+
+                st.markdown(f"**Year: {year}, Intermediary: {intermediary}**")
+                
+                # Create a DataFrame to display the data in tabular form
+                table_data = {
+                    "Metric": ["Q1 Premium", "Median Premium", "Q3 Premium"],
+                    "Client Name": [q1_client, median_client, q3_client],
+                    "Premium": [q1, median, q3]
+                }
+                table_df = pd.DataFrame(table_data)
+                st.table(table_df)
+                st.markdown("---")
+
+
+    cul1, cul2 = st.columns(2)
+ # Calculate the total insured premium by intermediary
     int_premiums = filtered_df.groupby("Intermediary")["Total insured Premium"].sum().reset_index()
     int_premiums.columns = ["Intermediary", "Total insured Premium"]    
 
-    with cols2:
+    with cul1:
         # Display the header
         st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel</h2>', unsafe_allow_html=True)
 
@@ -390,16 +480,59 @@ if not filtered_df.empty:
 
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
-   
-    ccl1, ccl2 = st.columns(2)
-    with ccl1:
-        with st.expander("Yearly Average Insured Premium by Intermediary"):
-            st.dataframe(yearly_avg_premium.style.format(precision=2))
-        
 
-    with ccl2:
+
+    # Group by Client Name and Intermediary, then sum the Total Insured Premium
+    df_grouped = filtered_df.groupby(['Client Name', 'Intermediary'])['Total insured Premium'].sum().reset_index()
+
+    # Get the top 10 clients by Total Insured Premium
+    top_10_clients = df_grouped.groupby('Client Name')['Total insured Premium'].sum().nlargest(15).reset_index()
+
+    # Filter the original DataFrame to include only the top 10 clients
+    client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
+
+   
+    with cul2:
+            # Create the bar chart
+        fig = go.Figure()
+
+            # Define custom colors
+        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+
+            # Add bars for each intermediary
+        for idx, intermediary in enumerate(client_df['Intermediary'].unique()):
+                intermediary_data = client_df[client_df['Intermediary'] == intermediary]
+                fig.add_trace(go.Bar(
+                    x=intermediary_data['Client Name'],
+                    y=intermediary_data['Total insured Premium'],
+                    name=intermediary,
+                    text=[f'{value/1e6:.0f}M' for value in intermediary_data['Total insured Premium']],
+                    textposition='auto',
+                    marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+                ))
+
+        fig.update_layout(
+                barmode='stack',
+                yaxis_title="Total Insured Premium",
+                xaxis_title="Client Name",
+                font=dict(color='Black'),
+                xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+                yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+                margin=dict(l=0, r=0, t=30, b=50)
+            )
+
+            # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Top 15 Client Premium by Channel</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True)
+
+
+    with cul1:
         with st.expander("Total Insured Premium by Intermediary"):
             st.dataframe(int_premiums.style.format(precision=2))
+    with cul2:
+        with st.expander("Client Premium by Intermediary"):
+            st.write(df[['Client Name', 'Intermediary', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
+
 
 
     cls1, cls2 = st.columns(2)
@@ -505,51 +638,6 @@ if not filtered_df.empty:
             st.write(df[['Client Name', 'Intermediary', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
  
 
-    # Group by Client Name and Intermediary, then sum the Total Insured Premium
-    df_grouped = filtered_df.groupby(['Client Name', 'Intermediary'])['Total insured Premium'].sum().reset_index()
-
-    # Get the top 10 clients by Total Insured Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total insured Premium'].sum().nlargest(20).reset_index()
-
-    # Filter the original DataFrame to include only the top 10 clients
-    client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
-
-   
-        # Create the bar chart
-    fig = go.Figure()
-
-        # Define custom colors
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
-
-        # Add bars for each intermediary
-    for idx, intermediary in enumerate(client_df['Intermediary'].unique()):
-            intermediary_data = client_df[client_df['Intermediary'] == intermediary]
-            fig.add_trace(go.Bar(
-                x=intermediary_data['Client Name'],
-                y=intermediary_data['Total insured Premium'],
-                name=intermediary,
-                text=[f'{value/1e6:.0f}M' for value in intermediary_data['Total insured Premium']],
-                textposition='auto',
-                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-            ))
-
-    fig.update_layout(
-            barmode='stack',
-            yaxis_title="Total Insured Premium",
-            xaxis_title="Client Name",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
-
-        # Display the chart in Streamlit
-    st.markdown('<h2 class="custom-subheader">Top 20 Client Premium by Channel</h2>', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
-
-    
-    with st.expander("Client Premium by Intermediary"):
-            st.write(df[['Client Name', 'Intermediary', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
 
 
     # summary table
