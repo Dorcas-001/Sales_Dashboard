@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from itertools import chain
+from matplotlib.ticker import FuncFormatter
+
 
 # Centered and styled main title using inline styles
 st.markdown('''
@@ -260,6 +262,10 @@ if not filtered_df.empty:
 
     custom_colors_insured = ["brown", "#e66c37", "#009DAE"]
 
+    def millions(x, pos):
+        'The two args are the value and tick position'
+        return '%1.0fM' % (x * 1e-6)
+
     with colc1:
         # Create the area chart for Total Insured Premium
         fig1, ax1 = plt.subplots()
@@ -270,25 +276,30 @@ if not filtered_df.empty:
         # Plot the stacked area chart
         pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors_insured[:len(pivot_df_insured.columns)])
 
-
         # Remove the border around the chart
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
         ax1.spines['left'].set_visible(False)
         ax1.spines['bottom'].set_visible(False)
-        
+
         # Set x-axis title
-        ax1.set_xlabel("Date", fontsize=12)
-        plt.xticks(rotation=45)
+        ax1.set_xlabel("Date", fontsize=9, color="gray")
+        plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        ax1.set_ylabel("Total Insured Premium", fontsize=12)
+        ax1.set_ylabel("Total Insured Premium", fontsize=9, color="gray")
+        plt.yticks(fontsize=9, color="gray")
 
         # Set chart title
         st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel over Time</h2>', unsafe_allow_html=True)
 
+        # Format the y-axis
+        formatter = FuncFormatter(millions)
+        ax1.yaxis.set_major_formatter(formatter)
+
         # Display the chart in Streamlit
         st.pyplot(fig1)
+
 
 
     # Group by day and intermediary, then sum the Total Lives
@@ -316,11 +327,13 @@ if not filtered_df.empty:
         ax2.spines['bottom'].set_visible(False)
         
         # Set x-axis title
-        ax2.set_xlabel("Date", fontsize=12)
-        plt.xticks(rotation=45)
+        ax2.set_xlabel("Date", fontsize=9, color="gray")
+        plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        ax2.set_ylabel("Total Lives Covered", fontsize=12)
+        ax2.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
+        plt.yticks(fontsize=9, color="gray")
+
 
         # Set chart title
         st.markdown('<h2 class="custom-subheader">Total Lives Covered by Channel over Time</h2>', unsafe_allow_html=True)
