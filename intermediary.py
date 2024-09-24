@@ -241,6 +241,98 @@ if not filtered_df.empty:
         </style>
         """, unsafe_allow_html=True)
 
+
+
+    colc1, colc2 = st.columns(2)
+    # Group by day and intermediary, then sum the Total Insured Premium
+    area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Intermediary'])['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
+
+    # Sort by the START DATE
+    area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
+
+    custom_colors = ["#006E7F", "#e66c37", "red"]
+    with colc1:
+        # Create the area chart
+        fig2 = go.Figure()
+
+        # Add traces for each intermediary with custom colors
+        for i, intermediary in enumerate(area_chart_total_insured['Intermediary'].unique()):
+            intermediary_data = area_chart_total_insured[area_chart_total_insured['Intermediary'] == intermediary]
+            fig2.add_trace(
+                go.Scatter(
+                    x=intermediary_data['START DATE'], 
+                    y=intermediary_data['Total Insured Premium'], 
+                    mode='lines', 
+                    name=intermediary,
+                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
+                    fill='tozeroy'  # Fill to the x-axis
+                )
+            )
+
+        # Set x-axis title
+        fig2.update_xaxes(title_text="Date", tickangle=45)  
+
+        # Set y-axis title
+        fig2.update_yaxes(title_text="Total Insured Premium")
+
+        # Set chart title and layout
+        fig2.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Total Insured Premium",
+            font=dict(color='Black'),
+            margin=dict(l=0, r=0, t=30, b=50)
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel Over Time</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig2, use_container_width=True)
+
+
+    # Group by day and intermediary, then sum the Total Lives
+    area_chart_total_lives = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Intermediary'])['Total lives'].sum().reset_index(name='Total lives')
+
+    # Sort by the START DATE
+    area_chart_total_lives = area_chart_total_lives.sort_values("START DATE")
+
+    custom_colors = ["#006E7F", "#e66c37", "red"]
+
+    with colc2:
+        # Create the area chart
+        fig2 = go.Figure()
+
+        # Add traces for each intermediary with custom colors
+        for i, intermediary in enumerate(area_chart_total_lives['Intermediary'].unique()):
+            intermediary_data = area_chart_total_lives[area_chart_total_lives['Intermediary'] == intermediary]
+            fig2.add_trace(
+                go.Scatter(
+                    x=intermediary_data['START DATE'], 
+                    y=intermediary_data['Total lives'], 
+                    mode='lines', 
+                    name=intermediary,
+                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
+                    fill='tozeroy'  # Fill to the x-axis
+                )
+            )
+
+        # Set x-axis title
+        fig2.update_xaxes(title_text="Date", tickangle=45)  
+
+        # Set y-axis title
+        fig2.update_yaxes(title_text="Total Lives Covered")
+
+        # Set chart title and layout
+        fig2.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Total Lives Covered",
+            font=dict(color='Black'),
+            margin=dict(l=0, r=0, t=30, b=50)
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Channel Over Time</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig2, use_container_width=True)
+
+
     cols1,cols2 = st.columns(2)
 
     # Group data by "Start Date Year" and "Intermediary" and calculate the average Total Insured Premium
@@ -311,17 +403,18 @@ if not filtered_df.empty:
 
 
     cls1, cls2 = st.columns(2)
+
     # Group data by "Start Date Month" and "Intermediary" and sum the Total Insured Premium
     monthly_premium = filtered_df.groupby(['Start Date Month', 'Intermediary'])['Total insured Premium'].sum().unstack().fillna(0)
 
     # Group data by "Start Date Month" and sum the Total Lives
     monthly_lives = filtered_df.groupby(['Start Date Month'])['Total lives'].sum()
 
-    # Define custom colors
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
     with cls1:
-        # Create the grouped bar chart
+        # Define custom colors
+        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+
         fig_monthly_premium = go.Figure()
 
         for idx, intermediary in enumerate(monthly_premium.columns):
@@ -335,58 +428,101 @@ if not filtered_df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-        # Add a line chart to show the trend of total lives over time
+        # Add a line chart to show the trend of total insured premium over time
         fig_monthly_premium.add_trace(go.Scatter(
-            x=monthly_lives.index,
-            y=monthly_lives,
+            x=monthly_premium.index,
+            y=monthly_premium.sum(axis=1),
             mode='lines+markers',
-            name='Total Lives Trend',
+            name='Rate of change',
             line=dict(color='red', width=2),
-            marker=dict(size=6, symbol='circle', color='red'),
-            yaxis='y2'
+            marker=dict(size=6, symbol='circle', color='red')
         ))
 
+        # Set layout for the Total Insured Premium chart
         fig_monthly_premium.update_layout(
             barmode='group',  # Grouped bar chart
             xaxis_title="Start Date",
             yaxis_title="Total Insured Premium",
-            yaxis2=dict(
-                title='Total Lives',
-                overlaying='y',
-                side='right',
-                showgrid=False,
-                tickfont=dict(color='gray'),
-                titlefont=dict(color='gray')
-            ),
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             margin=dict(l=0, r=0, t=30, b=50),
         )
 
-        # Display the chart in Streamlit
+        # Display the Total Insured Premium chart in Streamlit
         st.markdown('<h2 class="custom-subheader">Total Insured Premium Monthly by Channel</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
-        
+
+    with cls2:
+       # Create the grouped bar chart for Total Lives Covered
+        fig_monthly_lives = go.Figure()
+
+        # Add a bar chart to show the total lives covered over time
+        fig_monthly_lives.add_trace(go.Bar(
+            x=monthly_lives.index,
+            y=monthly_lives,
+            name='Total Lives Covered',
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y+name',
+            marker_color='#006E7F'
+        ))
+
+        # Add a line chart to show the trend of total lives covered over time
+        fig_monthly_lives.add_trace(go.Scatter(
+            x=monthly_lives.index,
+            y=monthly_lives,
+            mode='lines+markers',
+            name='Rate of change',
+            line=dict(color='red', width=2),
+            marker=dict(size=6, symbol='circle', color='red')
+        ))
+
+        # Set layout for the Total Lives chart
+        fig_monthly_lives.update_layout(
+            barmode='group',  # Grouped bar chart
+            xaxis_title="Start Date",
+            yaxis_title="Total Lives Covered",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+        )
+
+        # Display the Total Lives chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered Monthly</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_monthly_lives, use_container_width=True)
+
+    clm1, clm2 = st.columns(2)
+
+    with clm1:
+        # Create an expandable section for the table
+        with st.expander("View Monthly Total Insured Premium by Channel"):
+            st.dataframe(monthly_premium.style.format(precision=2))
+
+    with clm2:
+        with st.expander("View Monthly Total Live covered by Channel"):
+            st.write(df[['Client Name', 'Intermediary', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
+ 
 
     # Group by Client Name and Intermediary, then sum the Total Insured Premium
     df_grouped = filtered_df.groupby(['Client Name', 'Intermediary'])['Total insured Premium'].sum().reset_index()
 
     # Get the top 10 clients by Total Insured Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total insured Premium'].sum().nlargest(15).reset_index()
+    top_10_clients = df_grouped.groupby('Client Name')['Total insured Premium'].sum().nlargest(20).reset_index()
 
     # Filter the original DataFrame to include only the top 10 clients
     client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
 
-    with cls2:
+   
         # Create the bar chart
-        fig = go.Figure()
+    fig = go.Figure()
 
         # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
         # Add bars for each intermediary
-        for idx, intermediary in enumerate(client_df['Intermediary'].unique()):
+    for idx, intermediary in enumerate(client_df['Intermediary'].unique()):
             intermediary_data = client_df[client_df['Intermediary'] == intermediary]
             fig.add_trace(go.Bar(
                 x=intermediary_data['Client Name'],
@@ -397,7 +533,7 @@ if not filtered_df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-        fig.update_layout(
+    fig.update_layout(
             barmode='stack',
             yaxis_title="Total Insured Premium",
             xaxis_title="Client Name",
@@ -408,60 +544,12 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Top 10 Client Premium by Channel</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig, use_container_width=True)
+    st.markdown('<h2 class="custom-subheader">Top 20 Client Premium by Channel</h2>', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
 
-    clm1, clm2 = st.columns(2)
-
-    with clm1:
-        # Create an expandable section for the table
-        with st.expander("View Detailed Monthly Total Insured Premium by Intermediary"):
-            st.dataframe(monthly_premium.style.format(precision=2))
-
-    with clm2:
-        with st.expander("Client Premium by Intermediary"):
+    
+    with st.expander("Client Premium by Intermediary"):
             st.write(df[['Client Name', 'Intermediary', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
-    # Group by day and intermediary, then sum the Total Insured Premium
-    line_chart_total_insured = filtered_df.groupby([df["START DATE"].dt.strftime("%Y-%m-%d"), 'Intermediary'])['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
-
-    # Sort by the START DATE
-    line_chart_total_insured = line_chart_total_insured.sort_values("START DATE")
-
-    custom_colors = ["#006E7F", "#e66c37", "red"]
-
-    # Create the line chart
-    fig2 = go.Figure()
-
-    # Add traces for each intermediary with custom colors
-    for i, intermediary in enumerate(line_chart_total_insured['Intermediary'].unique()):
-        intermediary_data = line_chart_total_insured[line_chart_total_insured['Intermediary'] == intermediary]
-        fig2.add_trace(
-            go.Scatter(
-                x=intermediary_data['START DATE'], 
-                y=intermediary_data['Total Insured Premium'], 
-                mode='lines+markers', 
-                name=intermediary,
-                line=dict(color=custom_colors[i % len(custom_colors)])  # Use custom colors
-            )
-        )
-
-    # Set x-axis title
-    fig2.update_xaxes(title_text="Date", tickangle=45)  
-
-    # Set y-axis title
-    fig2.update_yaxes(title_text="Total Insured Premium")
-
-    # Set chart title and layout
-    fig2.update_layout(
-        xaxis_title="Date",
-        yaxis_title="Total Insured Premium",
-        font=dict(color='Black'),
-        margin=dict(l=0, r=0, t=30, b=50)
-    )
-
-    # Display the chart in Streamlit
-    st.markdown('<h2 class="custom-subheader">Intermediary Trend vs Total Insured Premium Over Time</h2>', unsafe_allow_html=True)
-    st.plotly_chart(fig2, use_container_width=True)
 
 
     # summary table
