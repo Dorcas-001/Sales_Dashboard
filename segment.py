@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from itertools import chain
+from matplotlib.ticker import FuncFormatter
+
 
 # Centered and styled main title using inline styles
 st.markdown('''
@@ -25,7 +27,7 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">CHANNEL VIEW DASHBOARD</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">CLIENT SEGMENT VIEW </h1>', unsafe_allow_html=True)
 
 filepath="closed_sales Data - Copy.xlsx"
 sheet_name = "Closed Sales Data"
@@ -86,18 +88,61 @@ st.markdown("""
 
 # Ensure the 'Start Date' column is in datetime format if needed
 df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
-
-
+month_order = {
+    "January": 1, "February": 2, "March": 3, "April": 4, 
+    "May": 5, "June": 6, "July": 7, "August": 8, 
+    "September": 9, "October": 10, "November": 11, "December": 12
+}
+# Sort months based on their order
+sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
+# Sidebar for filters
 
 # Sidebar for filters
 st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
-month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Date Month'].dropna().unique()))
-segment = st.sidebar.multiselect("Select Channel", options=df['Client Segment'].unique())
+month = st.sidebar.multiselect("Select Month", options=sorted_months)
+segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 # Filtered DataFrame
 filtered_df = df
+# Dictionary to map month names to their order
+
+
+months = filtered_df['Start Date Month'].unique()
+
+months = sorted(months, key=lambda x: month_order[x])
+
+# Select slider for month range
+selected_month_range = st.select_slider(
+    "Select Start Date Month Range",
+    options=months,
+    value=(months[0], months[-1])
+)
+
+# Filter DataFrame based on selected month range
+start_month, end_month = selected_month_range
+start_index = month_order[start_month]
+end_index = month_order[end_month]
+
+# Filter DataFrame based on month order indices
+filtered_df = filtered_df[filtered_df['Start Date Month'].apply(lambda x: month_order[x]).between(start_index, end_index)]
+
+
+# Calculate min, median, and max
+min_value = filtered_df["Average Premium per Principal Member"].min()
+max_value = filtered_df["Average Premium per Principal Member"].max()
+
+    # Display the slider
+slider_values = st.slider(
+        "Select Average Premium per Principal Member range",
+        min_value=float(min_value),
+        max_value=float(max_value),
+        value=(float(min_value), float(max_value)),
+        step=1.0
+    )
+
+filtered_df = filtered_df[(filtered_df['Average Premium per Principal Member'] >= slider_values[0]) & (filtered_df['Average Premium per Principal Member'] <= slider_values[1])]
 
 # Apply filters to the DataFrame
 if year:
@@ -130,9 +175,9 @@ if not filtered_df.empty:
     scaling_factor = 1_000_000  # For millions
 
     total_pre = filtered_df["Basic Premium"].sum()
-    total_in_pre = filtered_df["Total insured Premium"].sum()
+    total_in_pre = filtered_df["Total Premium"].sum()
     total_lives = filtered_df["Total lives"].sum()
-    average_premium_per_life = filtered_df["Total insured Premium"].mean()
+    average_premium_per_life = filtered_df["Total Premium"].mean()
 
 
     # Scale the sums
@@ -187,7 +232,7 @@ if not filtered_df.empty:
 
     # Display metrics
     display_metric(col1, "Total Basic Premuim", f"RWF {total_pre_scaled:.0f}M")
-    display_metric(col2, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col3, "Total Lives", total_lives)
     display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
 
@@ -241,52 +286,58 @@ if not filtered_df.empty:
         </style>
         """, unsafe_allow_html=True)
 
+    
+    custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
+
 
 
     colc1, colc2 = st.columns(2)
-    # Group by day and Client Segment, then sum the Total Insured Premium
-    area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total insured Premium'].sum().reset_index(name='Total Insured Premium')
+    
+    # Function to format y-axis labels in millions
+    def millions(x, pos):
+        'The two args are the value and tick position'
+        return '%1.0fM' % (x * 1e-6)
+
+    # Group by day and Client Segment, then sum the Total Premium
+    area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total Premium'].sum().reset_index(name='Total Premium')
 
     # Sort by the START DATE
     area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
 
-    custom_colors = ["#006E7F", "#e66c37", "red"]
-    with colc1:
-        # Create the area chart
-        fig2 = go.Figure()
 
-        # Add traces for each Client Segment with custom colors
-        for i, Client_Segment in enumerate(area_chart_total_insured['Client Segment'].unique()):
-            Client_Segment_data = area_chart_total_insured[area_chart_total_insured['Client Segment'] == Client_Segment]
-            fig2.add_trace(
-                go.Scatter(
-                    x=Client_Segment_data['START DATE'], 
-                    y=Client_Segment_data['Total Insured Premium'], 
-                    mode='lines', 
-                    name=Client_Segment,
-                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
-                    fill='tozeroy'  # Fill to the x-axis
-                )
-            )
+    with colc1:
+        # Create the area chart for Total Premium
+        fig1, ax1 = plt.subplots()
+
+        # Pivot the DataFrame for easier plotting
+        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Client Segment', values='Total Premium').fillna(0)
+        
+        # Plot the stacked area chart
+        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
+
+        # Remove the border around the chart
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
 
         # Set x-axis title
-        fig2.update_xaxes(title_text="Date", tickangle=45)  
+        ax1.set_xlabel("Date", fontsize=9, color="gray")
+        plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        fig2.update_yaxes(title_text="Total Insured Premium")
+        ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
+        plt.yticks(fontsize=9, color="gray")
 
-        # Set chart title and layout
-        fig2.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Total Insured Premium",
-            font=dict(color='Black'),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
+        # Format the y-axis
+        formatter = FuncFormatter(millions)
+        ax1.yaxis.set_major_formatter(formatter)
+
+        # Set chart title
+        st.markdown('<h2 class="custom-subheader">Total Premium by Clent Segment Over Time</h2>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel Over Time</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig2, use_container_width=True)
-
+        st.pyplot(fig1)
 
     # Group by day and Client Segment, then sum the Total Lives
     area_chart_total_lives = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total lives'].sum().reset_index(name='Total lives')
@@ -294,52 +345,42 @@ if not filtered_df.empty:
     # Sort by the START DATE
     area_chart_total_lives = area_chart_total_lives.sort_values("START DATE")
 
-    custom_colors = ["#006E7F", "#e66c37", "red"]
-
     with colc2:
-        # Create the area chart
-        fig2 = go.Figure()
+        # Create the area chart for Total Lives Covered
+        fig2, ax2 = plt.subplots()
 
-        # Add traces for each Client Segment with custom colors
-        for i, Client_Segment in enumerate(area_chart_total_lives['Client Segment'].unique()):
-            Client_Segment_data = area_chart_total_lives[area_chart_total_lives['Client Segment'] == Client_Segment]
-            fig2.add_trace(
-                go.Scatter(
-                    x=Client_Segment_data['START DATE'], 
-                    y=Client_Segment_data['Total lives'], 
-                    mode='lines', 
-                    name=Client_Segment,
-                    line=dict(color=custom_colors[i % len(custom_colors)]),  # Use custom colors
-                    fill='tozeroy'  # Fill to the x-axis
-                )
-            )
+        # Pivot the DataFrame for easier plotting
+        pivot_df_lives = area_chart_total_lives.pivot(index='START DATE', columns='Client Segment', values='Total lives').fillna(0)
+        
+        # Plot the stacked area chart
+        pivot_df_lives.plot(kind='area', stacked=True, ax=ax2, color=custom_colors[:len(pivot_df_lives.columns)])
+
+        # Remove the border around the chart
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        ax2.spines['left'].set_visible(False)
+        ax2.spines['bottom'].set_visible(False)
 
         # Set x-axis title
-        fig2.update_xaxes(title_text="Date", tickangle=45)  
+        ax2.set_xlabel("Date", fontsize=9, color="gray")
+        plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        fig2.update_yaxes(title_text="Total Lives Covered")
+        ax2.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
+        plt.yticks(fontsize=9, color="gray")
 
-        # Set chart title and layout
-        fig2.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Total Lives Covered",
-            font=dict(color='Black'),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
+        # Set chart title
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Client Segment Over Time</h2>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Channel Over Time</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig2, use_container_width=True)
-
+        st.pyplot(fig2)
 
     cols1,cols2 = st.columns(2)
 
-    # Group data by "Start Date Year" and "Client Segment" and calculate the average Total Insured Premium
-    yearly_avg_premium = filtered_df.groupby(['Start Date Year', 'Client Segment'])['Total insured Premium'].mean().unstack().fillna(0)
+    # Group data by "Start Date Year" and "Client Segment" and calculate the average Total Premium
+    yearly_avg_premium = filtered_df.groupby(['Start Date Year', 'Client Segment'])['Total Premium'].mean().unstack().fillna(0)
 
     # Define custom colors
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
     with cols1:
         # Create the grouped bar chart
@@ -368,53 +409,101 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Average Insured Premium Yearly by Channel</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="custom-subheader">Average Insured Premium Yearly by Client Segment</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
-    # Calculate the total insured premium by Client Segment
-    int_premiums = filtered_df.groupby("Client Segment")["Total insured Premium"].sum().reset_index()
-    int_premiums.columns = ["Client Segment", "Total insured Premium"]    
+    # Calculate the IQR for each client segment in each year
+    iqr_data = filtered_df.groupby(['Start Date Year', 'Client Segment'])['Total Premium'].describe(percentiles=[.25, .5, .75]).unstack()
+
+    # Flatten the MultiIndex columns
+    iqr_data.columns = ['_'.join(col).strip() for col in iqr_data.columns.values]
+
 
     with cols2:
-        # Display the header
-        st.markdown('<h2 class="custom-subheader">Total Insured Premium by Channel</h2>', unsafe_allow_html=True)
+        # Create the box plot
+        fig_iqr = go.Figure()
 
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
+        for idx, client_segment in enumerate(filtered_df['Client Segment'].unique()):
+            client_segment_data = filtered_df[filtered_df['Client Segment'] == client_segment]
+            
+            fig_iqr.add_trace(go.Box(
+                x=client_segment_data['Start Date Year'],
+                y=client_segment_data['Total Premium'],
+                name=client_segment,
+                boxmean='sd',  # Shows mean and standard deviation
+                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+            ))
 
-        # Create a donut chart
-        fig = px.pie(int_premiums, names="Client Segment", values="Total insured Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+        fig_iqr.update_layout(
+            xaxis_title="Start Date Year",
+            yaxis_title="Total Premium",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+            height=450,
+            legend=dict(
+                orientation="h",  # Horizontal legend
+                yanchor="bottom",
+                y=1.05,  # Adjust y position to move legend down
+                xanchor="center",
+                x=0.5
+            )
+        )
 
         # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-   
+        st.markdown('<h2 class="custom-subheader">Interquartile Range of Insured Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_iqr, use_container_width=True)
+
+
     ccl1, ccl2 = st.columns(2)
     with ccl1:
         with st.expander("Yearly Average Insured Premium by Client Segment"):
             st.dataframe(yearly_avg_premium.style.format(precision=2))
         
+    # Function to find the closest client to a given value
+    def find_closest_client(df, value):
+        return df.iloc[(df['Total Premium'] - value).abs().argsort()[:1]]['Client Name'].values[0]
 
     with ccl2:
-        with st.expander("Total Insured Premium by Client Segment"):
-            st.dataframe(int_premiums.style.format(precision=2))
+        with st.expander("Client Names with Q1, Median, and Q3 Premiums by Client Segment"):
+            for (year, client_segment), group in filtered_df.groupby(['Start Date Year', 'Client Segment']):
+                q1 = group['Total Premium'].quantile(0.25)
+                median = group['Total Premium'].median()
+                q3 = group['Total Premium'].quantile(0.75)
+
+                q1_client = find_closest_client(group, q1)
+                median_client = find_closest_client(group, median)
+                q3_client = find_closest_client(group, q3)
+
+                st.markdown(f"**Year: {year}, Client Segment: {client_segment}**")
+                
+                # Create a DataFrame to display the data in tabular form
+                table_data = {
+                    "Metric": ["Q1 Premium", "Median Premium", "Q3 Premium"],
+                    "Client Name": [q1_client, median_client, q3_client],
+                    "Premium": [q1, median, q3]
+                }
+                table_df = pd.DataFrame(table_data)
+                st.table(table_df)
+                st.markdown("---")
 
 
     cls1, cls2 = st.columns(2)
 
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Insured Premium
-    monthly_premium = filtered_df.groupby(['Start Date Month', 'Client Segment'])['Total insured Premium'].sum().unstack().fillna(0)
+    # Group data by "Start Date Month" and "Client Segment" and sum the Total Premium
+    monthly_premium = filtered_df.groupby(['Start Date Month', 'Client Segment'])['Total Premium'].sum().unstack().fillna(0)
 
-    # Group data by "Start Date Month" and sum the Total Lives
-    monthly_lives = filtered_df.groupby(['Start Date Month'])['Total lives'].sum()
+    # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
+    monthly_lives = filtered_df.groupby(['Start Date Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
+
+
+    # Create the layout columns
+    cls1, cls2 = st.columns(2)
 
     with cls1:
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
-
         fig_monthly_premium = go.Figure()
 
         for idx, Client_Segment in enumerate(monthly_premium.columns):
@@ -428,7 +517,7 @@ if not filtered_df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-        # Add a line chart to show the trend of total insured premium over time
+        # Add a line chart to show the trend of Total Premium over time
         fig_monthly_premium.add_trace(go.Scatter(
             x=monthly_premium.index,
             y=monthly_premium.sum(axis=1),
@@ -438,40 +527,39 @@ if not filtered_df.empty:
             marker=dict(size=6, symbol='circle', color='red')
         ))
 
-        # Set layout for the Total Insured Premium chart
+        # Set layout for the Total Premium chart
         fig_monthly_premium.update_layout(
             barmode='group',  # Grouped bar chart
             xaxis_title="Start Date",
-            yaxis_title="Total Insured Premium",
+            yaxis_title="Total Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             margin=dict(l=0, r=0, t=30, b=50),
         )
 
-        # Display the Total Insured Premium chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Insured Premium Monthly by Channel</h2>', unsafe_allow_html=True)
+        # Display the Total Premium chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Total Premium Monthly by Client Segment</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
     with cls2:
-       # Create the grouped bar chart for Total Lives Covered
         fig_monthly_lives = go.Figure()
 
-        # Add a bar chart to show the total lives covered over time
-        fig_monthly_lives.add_trace(go.Bar(
-            x=monthly_lives.index,
-            y=monthly_lives,
-            name='Total Lives Covered',
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y+name',
-            marker_color='#006E7F'
-        ))
+        for idx, Client_Segment in enumerate(monthly_lives.columns):
+            fig_monthly_lives.add_trace(go.Bar(
+                x=monthly_lives.index,
+                y=monthly_lives[Client_Segment],
+                name=Client_Segment,
+                textposition='inside',
+                textfont=dict(color='white'),
+                hoverinfo='x+y+name',
+                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+            ))
 
         # Add a line chart to show the trend of total lives covered over time
         fig_monthly_lives.add_trace(go.Scatter(
             x=monthly_lives.index,
-            y=monthly_lives,
+            y=monthly_lives.sum(axis=1),
             mode='lines+markers',
             name='Rate of change',
             line=dict(color='red', width=2),
@@ -490,68 +578,90 @@ if not filtered_df.empty:
         )
 
         # Display the Total Lives chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives Covered Monthly</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered Monthly by Client Segment</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_lives, use_container_width=True)
+
 
     clm1, clm2 = st.columns(2)
 
     with clm1:
         # Create an expandable section for the table
-        with st.expander("View Monthly Total Insured Premium by Channel"):
+        with st.expander("View Monthly Total Premium by Client Segment"):
             st.dataframe(monthly_premium.style.format(precision=2))
 
     with clm2:
-        with st.expander("View Monthly Total Live covered by Channel"):
-            st.write(df[['Client Name', 'Client Segment', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
+        with st.expander("View Monthly Total Live covered by Client Segment"):
+            st.write(df[['Client Name', 'Client Segment', 'Total Premium']].style.background_gradient(cmap="YlOrBr"))
  
 
-    # Group by Client Name and Client Segment, then sum the Total Insured Premium
-    df_grouped = filtered_df.groupby(['Client Name', 'Client Segment'])['Total insured Premium'].sum().reset_index()
+    cul1, cul2 = st.columns(2)
 
-    # Get the top 10 clients by Total Insured Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total insured Premium'].sum().nlargest(20).reset_index()
+ # Calculate the Total Premium by Client Segment
+    int_premiums = filtered_df.groupby("Client Segment")["Total Premium"].sum().reset_index()
+    int_premiums.columns = ["Client Segment", "Total Premium"]    
+
+    with cul1:
+        # Display the header
+        st.markdown('<h2 class="custom-subheader">Total Premium by Client Segment</h2>', unsafe_allow_html=True)
+
+
+        # Create a donut chart
+        fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+
+    # Group by Client Name and Client Segment, then sum the Total Premium
+    df_grouped = filtered_df.groupby(['Client Name', 'Client Segment'])['Total Premium'].sum().reset_index()
+
+    # Get the top 10 clients by Total Premium
+    top_10_clients = df_grouped.groupby('Client Name')['Total Premium'].sum().nlargest(20).reset_index()
 
     # Filter the original DataFrame to include only the top 10 clients
     client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
 
-   
+    with cul2:
         # Create the bar chart
-    fig = go.Figure()
-
-        # Define custom colors
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
-
-        # Add bars for each Client Segment
-    for idx, Client_Segment in enumerate(client_df['Client Segment'].unique()):
-            Client_Segment_data = client_df[client_df['Client Segment'] == Client_Segment]
-            fig.add_trace(go.Bar(
-                x=Client_Segment_data['Client Name'],
-                y=Client_Segment_data['Total insured Premium'],
-                name=Client_Segment,
-                text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total insured Premium']],
-                textposition='auto',
-                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-            ))
-
-    fig.update_layout(
-            barmode='stack',
-            yaxis_title="Total Insured Premium",
-            xaxis_title="Client Name",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50)
-        )
-
-        # Display the chart in Streamlit
-    st.markdown('<h2 class="custom-subheader">Top 20 Client Premium by Channel</h2>', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
-
-    
-    with st.expander("Client Premium by Client Segment"):
-            st.write(df[['Client Name', 'Client Segment', 'Total insured Premium']].style.background_gradient(cmap="YlOrBr"))
+        fig = go.Figure()
 
 
+            # Add bars for each Client Segment
+        for idx, Client_Segment in enumerate(client_df['Client Segment'].unique()):
+                Client_Segment_data = client_df[client_df['Client Segment'] == Client_Segment]
+                fig.add_trace(go.Bar(
+                    x=Client_Segment_data['Client Name'],
+                    y=Client_Segment_data['Total Premium'],
+                    name=Client_Segment,
+                    text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total Premium']],
+                    textposition='auto',
+                    marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+                ))
+
+        fig.update_layout(
+                barmode='stack',
+                yaxis_title="Total Premium",
+                xaxis_title="Client Name",
+                font=dict(color='Black'),
+                xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+                yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+                margin=dict(l=0, r=0, t=30, b=50)
+            )
+
+            # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Top 20 Client Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True)
+
+    culs1, culs2 = st.columns(2)
+    with culs1:
+        with st.expander("Client Premium by Client Segment"):
+                st.write(df[['Client Name', 'Client Segment', 'Total Premium']].style.background_gradient(cmap="YlOrBr"))
+
+    with culs2:
+        with st.expander("Total Premium by Client Segment"):
+            st.dataframe(int_premiums.style.format(precision=2))
     # summary table
     st.markdown('<h3 class="custom-subheader">Month-Wise Insured Premium By Client Segment Table</h2>', unsafe_allow_html=True)
 
@@ -562,7 +672,7 @@ if not filtered_df.empty:
         # Create the pivot table
         sub_specialisation_Year = pd.pivot_table(
             data=filtered_df,
-            values="Total insured Premium",
+            values="Total Premium",
             index=["Client Segment"],
             columns="Start Date Month"
         )

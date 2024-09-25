@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from itertools import chain
+from matplotlib.ticker import FuncFormatter
+
 
 # Centered and styled main title using inline styles
 st.markdown('''
@@ -132,19 +134,63 @@ with col2:
 df = df[(df["START DATE"] >= date1) & (df["START DATE"] <= date2)].copy()
 
 
+# Dictionary to map month names to their order
+month_order = {
+    "January": 1, "February": 2, "March": 3, "April": 4, 
+    "May": 5, "June": 6, "July": 7, "August": 8, 
+    "September": 9, "October": 10, "November": 11, "December": 12
+}
 
+
+
+# Sort months based on their order
+sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
 # Sidebar for filters
 st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
-month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Date Month'].dropna().unique()))
+month = st.sidebar.multiselect("Select Month", options=sorted_months)
 channel = st.sidebar.multiselect("Select Channel", options=df['Intermediary'].unique())
-segment = st.sidebar.multiselect("Select Clent Segment", options=df['Client Segment'].unique())
+segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
-
 # Filtered DataFrame
 filtered_df = df
+
+months = filtered_df['Start Date Month'].unique()
+
+months = sorted(months, key=lambda x: month_order[x])
+
+# Select slider for month range
+selected_month_range = st.select_slider(
+    "Select Start Date Month Range",
+    options=months,
+    value=(months[0], months[-1])
+)
+
+# Filter DataFrame based on selected month range
+start_month, end_month = selected_month_range
+start_index = month_order[start_month]
+end_index = month_order[end_month]
+
+# Filter DataFrame based on month order indices
+filtered_df = filtered_df[filtered_df['Start Date Month'].apply(lambda x: month_order[x]).between(start_index, end_index)]
+
+
+# Calculate min, median, and max
+min_value = filtered_df["Average Premium per Principal Member"].min()
+max_value = filtered_df["Average Premium per Principal Member"].max()
+
+    # Display the slider
+slider_values = st.slider(
+        "Select Average Premium per Principal Member range",
+        min_value=float(min_value),
+        max_value=float(max_value),
+        value=(float(min_value), float(max_value)),
+        step=1.0
+    )
+
+filtered_df = filtered_df[(filtered_df['Average Premium per Principal Member'] >= slider_values[0]) & (filtered_df['Average Premium per Principal Member'] <= slider_values[1])]
 
 # Apply filters to the DataFrame
 if year:
@@ -153,8 +199,13 @@ if month:
     filtered_df = filtered_df[filtered_df['Start Date Month'].isin(month)]
 if channel:
     filtered_df = filtered_df[filtered_df['Intermediary'].isin(channel)]
+if segment:
+    filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
+if cover:
+    filtered_df = filtered_df[filtered_df['Cover Type'].isin(cover)]
 if client_name:
     filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
+
 
 
 # Determine the filter description
@@ -173,6 +224,9 @@ if not filter_description:
 
 
 if not filtered_df.empty:
+
+
+
      # Calculate metrics
     scaling_factor = 1_000_000  # For millions
     scaled = 1_000_000_000  # for billions
@@ -197,6 +251,16 @@ if not filtered_df.empty:
     total_in_pre_scaled = total_in_pre / scaling_factor
     average_pre_scaled = average_pre/scaling_factor
     gwp_average_scaled = gwp_average/scaled
+
+    scale = 1_000
+    # Calculate the median premium per employer group
+    grouped = filtered_df.groupby('Client Name')['Average Premium per Principal Member'].median().reset_index()
+    grouped.columns = ['Client Name', 'Median Premium']
+    # Calculate key metrics
+    median_premium = (grouped['Median Premium'].median())/scale
+    Q1 = (grouped['Median Premium'].quantile(0.25))/scale
+    Q3 = (grouped['Median Premium'].quantile(0.75))/scale
+    IQR = Q3 - Q1
 
     # Create 4-column layout for metric cards# Define CSS for the styled boxes and tooltips
     st.markdown("""
@@ -261,6 +325,8 @@ if not filtered_df.empty:
         </style>
         """, unsafe_allow_html=True)
 
+
+
     # Function to display metrics in styled boxes with tooltips
     def display_metric(col, title, value, tooltip_text):
         col.markdown(f"""
@@ -271,21 +337,31 @@ if not filtered_df.empty:
             </div>
             """, unsafe_allow_html=True)
 
-    st.markdown('<h2 class="custom-subheader">For Closed Sales</h2>', unsafe_allow_html=True)    
+
+    st.markdown('<h2 class="custom-subheader">For Gross Written Premium</h2>', unsafe_allow_html=True)    
 
 
     # Display metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3= st.columns(3)
     display_metric(col1, "Total Clients", total_clients, "The total number of clients.")
     display_metric(col2, "Total Basic Premium", f"RWF {total_pre_scaled:.0f} M", "The total basic premium in millions of RWF.")
     display_metric(col3, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M", "The total insured premium in millions of RWF.")
-    display_metric(col4, "Total Lives", total_lives, "The total number of lives covered (Number of pricipal members + Dependents).")
-    display_metric(col1, "Total Principal Members", total_mem, "The total number of principal members.")
-    display_metric(col2, "Total Dependents", total_dependents, "The total number of dependents.")
-    display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}", "The average number of dependents per principal member.")
-    display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M", "The average insured premium per principal member in millions of RWF.")
-    display_metric(col1, "Average GWP", f"RWF {gwp_average_scaled:.0f} B", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
-    display_metric(col2, "Dependency Ratio", f"{dependency_ratio:.1f}", "The ratio of dependents to principal members. this shows that for every 8 dependents, there are 10 principal members ")
+    
+    display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M", "The average insured premium per principal member in millions of RWF.")
+    display_metric(col2, "Average GWP", f"RWF {gwp_average_scaled:.0f} B", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
+    display_metric(col3, "Median Premium", f"RWF {median_premium:.0f} K","Half of the employer groups have median premiums below RWF 718K per life covered, and the other half have premiums above this value")
+    display_metric(col1, "First Quartile (Q1)", f"RWF {Q1:.0f} K","This means that 25% of the employer groups have median premiums below RWF 521079.98 per life covered. Showing that a significant portion of employer groups are paying premiums at or below this amount.")
+    display_metric(col2, "Third Quartile (Q3)", f"RWF {Q3:.0f} K", "75% of the employer groups have median premiums below RWF 1191716.81 per life covered. Showing that a substantial portion of employer groups are paying premiums at or below this amount.")
+    display_metric(col3, "Interquartile Range (IQR)", f"RWF {IQR:.0f} K","It indicates that half of the employer groups have median premiums ranging from RWF 521079.98 to RWF 1191716.81 per lif covered. An IQR of RWF 670636.84 suggests that, most employer groups pay similar amounts for their premiums.")
 
+
+    st.markdown('<h2 class="custom-subheader">For Lives Covered</h2>', unsafe_allow_html=True)    
+
+    cols1,cols2, cols3 = st.columns(3)
+    display_metric(cols1, "Total Lives", total_lives, "The total number of lives covered (Number of pricipal members + Dependents).")
+    display_metric(cols2, "Total Principal Members", total_mem, "The total number of principal members.")
+    display_metric(cols3, "Total Dependents", total_dependents, "The total number of dependents.")
+    display_metric(cols1, "Average Dependents Per Principal Member", f"{average_dep:.0f}", "The average number of dependents per principal member.")
+    display_metric(cols2, "Dependency Ratio", f"{dependency_ratio:.1f}", "The ratio of dependents to principal members. this shows that for every 8 dependents, there are 10 principal members ")
 
     
