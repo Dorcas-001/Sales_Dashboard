@@ -148,7 +148,7 @@ sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: m
 # Sidebar for filters
 st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
-month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Date Month'].dropna().unique()))
+month = st.sidebar.multiselect("Select Month", options=sorted_months)
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
