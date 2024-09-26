@@ -26,7 +26,7 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">LIVES VIEW</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">LIVES COVERED VIEW</h1>', unsafe_allow_html=True)
 
 filepath="closed_sales Data - Copy.xlsx"
 sheet_name = "Closed Sales Data"
