@@ -294,7 +294,7 @@ if not filtered_df.empty:
     grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
     # Calculate key metrics
-    median_premium = (grouped['Median lives'].median())
+    median_lives = (grouped['Median lives'].median())
     Q1 = (grouped['Median lives'].quantile(0.25))
     Q3 = (grouped['Median lives'].quantile(0.75))
     IQR = Q3 - Q1
@@ -305,7 +305,7 @@ if not filtered_df.empty:
     display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
     display_metric(col1, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
     display_metric(col2, "Dependency Ratio", f"{dependency_ratio:.1f}")
-    display_metric(col3, "Median Lives", median_premium)
+    display_metric(col3, "Median Lives", median_lives)
     display_metric(col4, "Interquartile Range (IQR)", IQR)
 
 

@@ -236,7 +236,7 @@ if not filtered_df.empty:
     total_dependents = filtered_df["Dependents"].sum()
     average_dep = filtered_df["Average Number of Dependents per Employee"].sum()
     average_pre = filtered_df["Average Premium per Principal Member"].sum()
-    average_premium_per_life = filtered_df["Total insured Premium"].mean()
+    average_premium_per_life = filtered_df["Total Premium"].mean()
     gwp_average = total_clients * total_lives * average_premium_per_life
 
     dependency_ratio = total_dependents / total_mem
@@ -258,6 +258,7 @@ if not filtered_df.empty:
     Q1 = (grouped['Median Premium'].quantile(0.25))/scale
     Q3 = (grouped['Median Premium'].quantile(0.75))/scale
     IQR = Q3 - Q1
+
 
     # Create 4-column layout for metric cards# Define CSS for the styled boxes and tooltips
     st.markdown("""
@@ -282,12 +283,12 @@ if not filtered_df.empty:
         }
         .metric-title {
             color: #e66c37; /* Change this color to your preferred title color */
-            font-size: 1em;
+            font-size: 0.9em;
             margin-bottom: 10px;
         }
         .metric-value {
             color: #009DAE;
-            font-size: 1.5em;
+            font-size: 1em;
         }
         .tooltip {
             visibility: hidden;
@@ -352,13 +353,27 @@ if not filtered_df.empty:
     display_metric(col3, "Interquartile Range (IQR)", f"RWF {IQR:.0f} K","It indicates that half of the employer groups have median premiums ranging from RWF 521079.98 to RWF 1191716.81 per lif covered. An IQR of RWF 670636.84 suggests that, most employer groups pay similar amounts for their premiums.")
 
 
+
+
+    grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
+    grouped.columns = ['Client Name', 'Median lives']
+    # Calculate key metrics
+    median_lives = (grouped['Median lives'].median())
+    Q1 = (grouped['Median lives'].quantile(0.25))
+    Q3 = (grouped['Median lives'].quantile(0.75))
+    IQR = Q3 - Q1
+
     st.markdown('<h2 class="custom-subheader">For Lives Covered</h2>', unsafe_allow_html=True)    
 
-    cols1,cols2, cols3 = st.columns(3)
+    cols1,cols2, cols3, cols4 = st.columns(4)
+
     display_metric(cols1, "Total Lives", total_lives, "The total number of lives covered (Number of pricipal members + Dependents).")
     display_metric(cols2, "Total Principal Members", total_mem, "The total number of principal members.")
     display_metric(cols3, "Total Dependents", total_dependents, "The total number of dependents.")
-    display_metric(cols1, "Average Dependents Per Principal Member", f"{average_dep:.0f}", "The average number of dependents per principal member.")
-    display_metric(cols2, "Dependency Ratio", f"{dependency_ratio:.1f}", "The ratio of dependents to principal members. this shows that for every 8 dependents, there are 10 principal members ")
-
+    display_metric(cols4, "Average Dependents Per Principal Member", f"{average_dep:.0f}", "The average number of dependents per principal member.")
+    display_metric(cols1, "Dependency Ratio", f"{dependency_ratio:.1f}", "The ratio of dependents to principal members. this shows that for every 8 dependents, there are 10 principal members ")
+    display_metric(cols2, "First Quartile (Q1)", f"{Q1:.0f}","This means that 25% of the employer groups have median lives covered below 2.")
+    display_metric(cols3, "Third Quartile (Q3)", f"{Q3:.0f}", "75% of the employer groups have median lives below 40. ")
+    display_metric(cols4, "Median Premium", f"{median_lives:.0f}","Half of the employer groups have median lives covered below 7, and the other half have lives covered above this value")
+    display_metric(cols1, "Interquartile Range (IQR)", f"{IQR:.0f}","It indicates that half of the employer groups have median lives covered ranging from 2 to 40")
     
