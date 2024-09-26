@@ -150,6 +150,7 @@ st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
+channel = st.sidebar.multiselect("Select Channel", options=df['Intermediary'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 # Filtered DataFrame
@@ -196,6 +197,8 @@ if month:
     filtered_df = filtered_df[filtered_df['Start Date Month'].isin(month)]
 if segment:
     filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
+if channel:
+    filtered_df = filtered_df[filtered_df['Intermediary'].isin(channel)]
 if client_name:
     filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
 
@@ -206,6 +209,8 @@ if year:
     filter_description += f"{', '.join(map(str, year))} "
 if segment:
     filter_description += f"{', '.join(map(str, segment))} "
+if channel:
+    filter_description += f"{', '.join(map(str, channel))} "
 if month:
     filter_description += f"{', '.join(month)} "
 if client_name:
@@ -286,12 +291,12 @@ if not filtered_df.empty:
 
     scale = 1_000
     # Calculate the median premium per employer group
-    grouped = filtered_df.groupby('Client Name')['Average Premium per Principal Member'].median().reset_index()
-    grouped.columns = ['Client Name', 'Median Premium']
+    grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
+    grouped.columns = ['Client Name', 'Median lives']
     # Calculate key metrics
-    median_premium = (grouped['Median Premium'].median())/scale
-    Q1 = (grouped['Median Premium'].quantile(0.25))/scale
-    Q3 = (grouped['Median Premium'].quantile(0.75))/scale
+    median_premium = (grouped['Median lives'].median())
+    Q1 = (grouped['Median lives'].quantile(0.25))
+    Q3 = (grouped['Median lives'].quantile(0.75))
     IQR = Q3 - Q1
 
     display_metric(col1, "Total Lives", total_lives)
@@ -300,8 +305,8 @@ if not filtered_df.empty:
     display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
     display_metric(col1, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
     display_metric(col2, "Dependency Ratio", f"{dependency_ratio:.1f}")
-    display_metric(col3, "Median Premium", f"RWF {median_premium:.0f} K")
-    display_metric(col4, "Interquartile Range (IQR)", f"RWF {IQR:.0f} K")
+    display_metric(col3, "Median Lives", median_premium)
+    display_metric(col4, "Interquartile Range (IQR)", IQR)
 
 
 
@@ -393,62 +398,45 @@ if not filtered_df.empty:
         st.pyplot(fig1)
 
 
-    # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
-    yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
-        'No. of Principal Member': 'sum',
-        'Dependents': 'sum'
-    }).reset_index()
-
-    # Calculate total lives for sorting
-    yearly_totals['Total Lives'] = yearly_totals['No. of Principal Member'] + yearly_totals['Dependents']
-
-    # Sort the DataFrame by total lives in descending order
-    yearly_totals = yearly_totals.sort_values('Total Lives', ascending=False)
-
+    # Calculate the IQR for each year
     with cul2:
-        # Create the grouped bar chart
-        fig_yearly_totals = go.Figure()
+        # Create the box plot
+        fig_iqr = go.Figure()
 
-        # Add bars for Principal Members
-        fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
-            y=yearly_totals['No. of Principal Member'],
-            name='Principal Member',
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y+name',
-            marker_color=custom_colors[0]  # Custom color for Principal Member
-        ))
+        for idx, year in enumerate(filtered_df['Start Date Year'].unique()):
+            year_data = filtered_df[filtered_df['Start Date Year'] == year]
+            
+            fig_iqr.add_trace(go.Box(
+                x=year_data['Start Date Year'].astype(str),
+                y=year_data['Total lives'],
+                name=str(year),
+                boxmean='sd',  # Shows mean and standard deviation
+                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+            ))
 
-        # Add bars for Dependents
-        fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
-            y=yearly_totals['Dependents'],
-            name='Dependents',
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y+name',
-            marker_color=custom_colors[1]  # Custom color for Dependents
-        ))
-
-        fig_yearly_totals.update_layout(
-            barmode='group',  # Grouped bar chart
-            xaxis_title="Month",
+        fig_iqr.update_layout(
+            xaxis_title="Start Date Year",
             yaxis_title="Total Lives",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             margin=dict(l=0, r=0, t=30, b=50),
-            height=400
+            height=360,
+            legend=dict(
+                orientation="h",  # Horizontal legend
+                yanchor="bottom",
+                y=1.05,  # Adjust y position to move legend down
+                xanchor="center",
+                x=0.5
+            )
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives by Month and Member Type</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig_yearly_totals, use_container_width=True)
+        st.markdown('<h2 class="custom-subheader">Interquartile Range of Total Lives by Year</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_iqr, use_container_width=True)
 
-        with st.expander("Principal Members and Dependents Distribution Data"):
-            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
-
+    
+   
     colus1,colus2 = st.columns(2)
 
     # Group data by "Start Date Year" and calculate the total number of Principal Members and Dependents
@@ -498,19 +486,76 @@ if not filtered_df.empty:
         st.markdown('<h2 class="custom-subheader">Total Lives by Year and Member Type</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
+ # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
+    yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
+        'No. of Principal Member': 'sum',
+        'Dependents': 'sum'
+    }).reset_index()
+
+    # Calculate total lives for sorting
+    yearly_totals['Total Lives'] = yearly_totals['No. of Principal Member'] + yearly_totals['Dependents']
+
+    # Sort the DataFrame by total lives in descending order
+    yearly_totals = yearly_totals.sort_values('Total Lives', ascending=False)
+
+    with colus2:
+        # Create the grouped bar chart
+        fig_yearly_totals = go.Figure()
+
+        # Add bars for Principal Members
+        fig_yearly_totals.add_trace(go.Bar(
+            x=yearly_totals['Start Date Month'],
+            y=yearly_totals['No. of Principal Member'],
+            name='Principal Member',
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y+name',
+            marker_color=custom_colors[0]  # Custom color for Principal Member
+        ))
+
+        # Add bars for Dependents
+        fig_yearly_totals.add_trace(go.Bar(
+            x=yearly_totals['Start Date Month'],
+            y=yearly_totals['Dependents'],
+            name='Dependents',
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y+name',
+            marker_color=custom_colors[1]  # Custom color for Dependents
+        ))
+
+        fig_yearly_totals.update_layout(
+            barmode='group',  # Grouped bar chart
+            xaxis_title="Month",
+            yaxis_title="Total Lives",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+            height=400
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h2 class="custom-subheader">Total Lives by Month and Member Type</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_yearly_totals, use_container_width=True)
+
+        with st.expander("Principal Members and Dependents Distribution Data"):
+            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
 
    
 
 
-    df_sorted = filtered_df.sort_values(by='Total lives', ascending=False)
+    # Get the top 10 clients by Total Premium
+    top_10_clients = filtered_df.groupby('Client Name')['Total lives'].sum().nlargest(20).reset_index()
 
-    # Get the top 10 rows by employee size
-    top_employer_groups = df_sorted.head(10)
+    # Filter the original DataFrame to include only the top 10 clients
+    top_employer_groups = filtered_df[filtered_df['Client Name'].isin(top_10_clients['Client Name'])]
+    # Sort the client_df by Total Premium in descending order
+    top_employer_groups = top_employer_groups.sort_values(by='Total lives', ascending=False)
 
-    with colus2:
-        fig_employer_groups = go.Figure()
+    fig_employer_groups = go.Figure()
 
-        fig_employer_groups.add_trace(go.Bar(
+    fig_employer_groups.add_trace(go.Bar(
             x=top_employer_groups['Client Name'],
             y=top_employer_groups['Total lives'],
             marker=dict(color='#009DAE'),
@@ -520,7 +565,7 @@ if not filtered_df.empty:
             hoverinfo='y+text'
         ))
 
-        fig_employer_groups.update_layout(
+    fig_employer_groups.update_layout(
             xaxis_title="Client Name",
             yaxis_title="Total Lives",
             font=dict(color='Black'),
@@ -530,10 +575,10 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Top 10 Clients By Total Lives </h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig_employer_groups, use_container_width=True)
+    st.markdown('<h2 class="custom-subheader">Top 20 Clients By Total Lives </h2>', unsafe_allow_html=True)
+    st.plotly_chart(fig_employer_groups, use_container_width=True)
 
-        with st.expander("Clients Lives Covered Data"):
+    with st.expander("Clients Lives Covered Data"):
             st.write(df[['Client Name', 'Total lives']].style.background_gradient(cmap="YlOrBr"))
 
     
