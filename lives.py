@@ -354,47 +354,102 @@ if not filtered_df.empty:
         </style>
         """, unsafe_allow_html=True)
 
-
+    cul1, cul2 =st.columns(2)
 # Group by day and intermediary, then sum the Total Premium
     area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Cover Type'])['Total lives'].sum().reset_index(name='Total lives')
 
     # Sort by the START DATE
     area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
 
-    custom_colors_insured = ["#009DAE", "#e66c37"]
-        
-    fig1, ax1 = plt.subplots()
+    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+    with cul1:
+        fig1, ax1 = plt.subplots()
 
-        # Pivot the DataFrame for easier plotting
-    pivot_df_insured = area_chart_total_insured.pivot(index='START DATE',columns='Cover Type', values='Total lives').fillna(0)
-        
-    # Plot the stacked area chart
-    pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors_insured[:len(pivot_df_insured.columns)])
+            # Pivot the DataFrame for easier plotting
+        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE',columns='Cover Type', values='Total lives').fillna(0)
+            
+        # Plot the stacked area chart
+        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
 
-        # Remove the border around the chart
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
-    ax1.spines['left'].set_visible(False)
-    ax1.spines['bottom'].set_visible(False)
+            # Remove the border around the chart
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
 
-        # Set x-axis title
-    ax1.set_xlabel("Date", fontsize=9, color="gray")
-    plt.xticks(rotation=45, fontsize=9, color="gray")
+            # Set x-axis title
+        ax1.set_xlabel("Date", fontsize=9, color="gray")
+        plt.xticks(rotation=45, fontsize=9, color="gray")
 
-        # Set y-axis title
-    ax1.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
-    plt.yticks(fontsize=9, color="gray")
+            # Set y-axis title
+        ax1.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
+        plt.yticks(fontsize=9, color="gray")
 
-        # Set chart title
-    st.markdown('<h2 class="custom-subheader">Total Lives Covered by Cover Type over Time</h2>', unsafe_allow_html=True)
+            # Set chart title
+        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Cover Type over Time</h2>', unsafe_allow_html=True)
 
- 
+    
+
+            # Display the chart in Streamlit
+        st.pyplot(fig1)
+
+ # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
+    yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
+        'No. of Principal Member': 'sum',
+        'Dependents': 'sum'
+    }).reset_index()
+
+    # Calculate total lives for sorting
+    yearly_totals['Total Lives'] = yearly_totals['No. of Principal Member'] + yearly_totals['Dependents']
+
+    # Sort the DataFrame by total lives in descending order
+    yearly_totals = yearly_totals.sort_values('Total Lives', ascending=False)
+
+    with cul2:
+        # Create the grouped bar chart
+        fig_yearly_totals = go.Figure()
+
+        # Add bars for Principal Members
+        fig_yearly_totals.add_trace(go.Bar(
+            x=yearly_totals['Start Date Month'],
+            y=yearly_totals['No. of Principal Member'],
+            name='Principal Member',
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y+name',
+            marker_color=custom_colors[0]  # Custom color for Principal Member
+        ))
+
+        # Add bars for Dependents
+        fig_yearly_totals.add_trace(go.Bar(
+            x=yearly_totals['Start Date Month'],
+            y=yearly_totals['Dependents'],
+            name='Dependents',
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y+name',
+            marker_color=custom_colors[1]  # Custom color for Dependents
+        ))
+
+        fig_yearly_totals.update_layout(
+            barmode='group',  # Grouped bar chart
+            xaxis_title="Month",
+            yaxis_title="Total Lives",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+            height=450
+        )
 
         # Display the chart in Streamlit
-    st.pyplot(fig1)
+        st.markdown('<h2 class="custom-subheader">Total Lives by Month and Member Type</h2>', unsafe_allow_html=True)
+        st.plotly_chart(fig_yearly_totals, use_container_width=True)
+
+        with st.expander("Principal Members and Dependents Distribution Data"):
+            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
 
     colus1,colus2 = st.columns(2)
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
     # Group data by "Start Date Year" and calculate the total number of Principal Members and Dependents
     yearly_totals = filtered_df.groupby(['Start Date Year']).agg({
@@ -444,67 +499,15 @@ if not filtered_df.empty:
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
 
-    # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
-    yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
-        'No. of Principal Member': 'sum',
-        'Dependents': 'sum'
-    }).reset_index()
+   
 
-    # Calculate total lives for sorting
-    yearly_totals['Total Lives'] = yearly_totals['No. of Principal Member'] + yearly_totals['Dependents']
-
-    # Sort the DataFrame by total lives in descending order
-    yearly_totals = yearly_totals.sort_values('Total Lives', ascending=False)
-
-    with colus2:
-        # Create the grouped bar chart
-        fig_yearly_totals = go.Figure()
-
-        # Add bars for Principal Members
-        fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
-            y=yearly_totals['No. of Principal Member'],
-            name='Principal Member',
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y+name',
-            marker_color=custom_colors[0]  # Custom color for Principal Member
-        ))
-
-        # Add bars for Dependents
-        fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
-            y=yearly_totals['Dependents'],
-            name='Dependents',
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y+name',
-            marker_color=custom_colors[1]  # Custom color for Dependents
-        ))
-
-        fig_yearly_totals.update_layout(
-            barmode='group',  # Grouped bar chart
-            xaxis_title="Month",
-            yaxis_title="Total Lives",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50),
-            height=450
-        )
-
-        # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives by Month and Member Type</h2>', unsafe_allow_html=True)
-        st.plotly_chart(fig_yearly_totals, use_container_width=True)
-
-    cols1, cols2 = st.columns(2)
 
     df_sorted = filtered_df.sort_values(by='Total lives', ascending=False)
 
     # Get the top 10 rows by employee size
     top_employer_groups = df_sorted.head(10)
 
-    with cols1:
+    with colus2:
         fig_employer_groups = go.Figure()
 
         fig_employer_groups.add_trace(go.Bar(
@@ -530,67 +533,10 @@ if not filtered_df.empty:
         st.markdown('<h2 class="custom-subheader">Top 10 Clients By Total Lives </h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_employer_groups, use_container_width=True)
 
-    # Calculate the total insured premium by intermediary
-    int_premiums = filtered_df.groupby("Intermediary")["Total lives"].sum().reset_index()
-    int_premiums.columns = ["Intermediary", "Total lives"]
-
-    with cols2:
-        # Display the header
-        st.markdown('<h2 class="custom-subheader">Total Lives by Channel</h2>', unsafe_allow_html=True)
-
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
-
-        # Create a donut chart
-        fig = px.pie(int_premiums, names="Intermediary", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value')
-        fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True, height=200)
-
-    ccl1, ccl2 =st.columns(2)
-
-    with ccl1:
         with st.expander("Clients Lives Covered Data"):
             st.write(df[['Client Name', 'Total lives']].style.background_gradient(cmap="YlOrBr"))
-    with ccl2:
-        with st.expander("Total Lives by Channel Data"):
-            st.write(df[['Total lives', 'Intermediary']].style.background_gradient(cmap="YlOrBr"))
-
-    cl1, cl2 =st.columns(2)
-
-        # Calculate the total insured premium by client segment
-    int_premiums = filtered_df.groupby("Client Segment")["Total lives"].sum().reset_index()
-    int_premiums.columns = ["Client Segment", "Total lives"]
-
-    with cl1:    
-        # Display the header
-        st.markdown('<h2 class="custom-subheader">Total Lives by Client Segment</h2>', unsafe_allow_html=True)
-
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
-
-        # Create a donut chart
-        fig = px.pie(int_premiums, names="Client Segment", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
-
 
     
-    ccls1, ccls2 =st.columns(2)
-
-    with ccls2:
-        with st.expander("Principal Members and Dependents Distribution Data"):
-            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
-    with ccls1:
-        with st.expander("Total lives by Client Sement Data"):
-            st.write(df[['Total lives', 'Client Segment']].style.background_gradient(cmap="YlOrBr"))
-
     cls1, cls2 = st.columns(2)
     
     # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
@@ -665,7 +611,61 @@ if not filtered_df.empty:
         st.markdown('<h2 class="custom-subheader">Monthly Total Lives by Intermediary</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_lives_by_intermediary, use_container_width=True)
 
+
+    # Calculate the total insured premium by intermediary
+    int_premiums = filtered_df.groupby("Intermediary")["Total lives"].sum().reset_index()
+    int_premiums.columns = ["Intermediary", "Total lives"]
+
     
+    cols1, cols2 = st.columns(2)
+
+    with cols1:
+        # Display the header
+        st.markdown('<h2 class="custom-subheader">Total Lives by Channel</h2>', unsafe_allow_html=True)
+
+        # Define custom colors
+        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
+
+        # Create a donut chart
+        fig = px.pie(int_premiums, names="Intermediary", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value')
+        fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True, height=200)
+
+        with st.expander("Total Lives by Channel Data"):
+            st.write(df[['Total lives', 'Intermediary']].style.background_gradient(cmap="YlOrBr"))
+
+        # Calculate the total insured premium by client segment
+    int_premiums = filtered_df.groupby("Client Segment")["Total lives"].sum().reset_index()
+    int_premiums.columns = ["Client Segment", "Total lives"]
+
+    with cols2:    
+        # Display the header
+        st.markdown('<h2 class="custom-subheader">Total Lives by Client Segment</h2>', unsafe_allow_html=True)
+
+        # Define custom colors
+        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
+
+        # Create a donut chart
+        fig = px.pie(int_premiums, names="Client Segment", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("Total lives by Client Sement Data"):
+            st.write(df[['Total lives', 'Client Segment']].style.background_gradient(cmap="YlOrBr"))
+
+
+
+
+    
+
+
+
 
     st.markdown('<h3 class="custom-subheader">Month-Wise Lives Distribution By Client Segment Table</h3>', unsafe_allow_html=True)
 
