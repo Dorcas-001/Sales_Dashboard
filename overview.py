@@ -141,8 +141,7 @@ month_order = {
     "September": 9, "October": 10, "November": 11, "December": 12
 }
 
-
-
+df['Start Date Year'] = pd.to_numeric(df['Start Date Year'], errors='coerce').dropna().astype(int)
 # Sort months based on their order
 sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
 # Sidebar for filters
@@ -157,40 +156,38 @@ client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Na
 # Filtered DataFrame
 filtered_df = df
 
-months = filtered_df['Start Date Month'].unique()
+# Create a 'Month-Year' column
+filtered_df['Month-Year'] = filtered_df['Start Date Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
 
-months = sorted(months, key=lambda x: month_order[x])
 
-# Select slider for month range
-selected_month_range = st.select_slider(
-    "Select Start Date Month Range",
-    options=months,
-    value=(months[0], months[-1])
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order[month])
+
+# Extract unique month-year combinations and sort them
+month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
+
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
 )
 
-# Filter DataFrame based on selected month range
-start_month, end_month = selected_month_range
-start_index = month_order[start_month]
-end_index = month_order[end_month]
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
 
-# Filter DataFrame based on month order indices
-filtered_df = filtered_df[filtered_df['Start Date Month'].apply(lambda x: month_order[x]).between(start_index, end_index)]
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
 
+# Filter DataFrame based on month-year order indices
+filtered_df = filtered_df[
+    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+]
 
-# Calculate min, median, and max
-min_value = filtered_df["Average Premium per Principal Member"].min()
-max_value = filtered_df["Average Premium per Principal Member"].max()
-
-    # Display the slider
-slider_values = st.slider(
-        "Select Average Premium per Principal Member range",
-        min_value=float(min_value),
-        max_value=float(max_value),
-        value=(float(min_value), float(max_value)),
-        step=1.0
-    )
-
-filtered_df = filtered_df[(filtered_df['Average Premium per Principal Member'] >= slider_values[0]) & (filtered_df['Average Premium per Principal Member'] <= slider_values[1])]
 
 # Apply filters to the DataFrame
 if year:
@@ -233,7 +230,7 @@ if not filtered_df.empty:
 
     total_clients = filtered_df["Client Name"].nunique()
     total_pre = filtered_df["Basic Premium"].sum()
-    total_in_pre = filtered_df["Total insured Premium"].sum()
+    total_in_pre = filtered_df["Total Premium"].sum()
     total_lives = filtered_df["Total lives"].sum()
     total_mem = filtered_df["No. of Principal Member"].sum()
     total_dependents = filtered_df["Dependents"].sum()

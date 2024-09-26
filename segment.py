@@ -86,8 +86,55 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
+
 # Ensure the 'Start Date' column is in datetime format if needed
 df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
+
+
+# Get minimum and maximum dates for the date input
+startDate = df["START DATE"].min()
+endDate = df["START DATE"].max()
+
+# Define CSS for the styled date input boxes
+st.markdown("""
+    <style>
+    .date-input-box {
+        border-radius: 10px;
+        text-align: left;
+        margin: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .date-input-title {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+df = df[(df["START DATE"] >= date1) & (df["START DATE"] <= date2)].copy()
+
+
 month_order = {
     "January": 1, "February": 2, "March": 3, "April": 4, 
     "May": 5, "June": 6, "July": 7, "August": 8, 
@@ -95,7 +142,7 @@ month_order = {
 }
 # Sort months based on their order
 sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
-# Sidebar for filters
+df['Start Date Year'] = pd.to_numeric(df['Start Date Year'], errors='coerce').dropna().astype(int)
 
 # Sidebar for filters
 st.sidebar.header("Filters")
@@ -106,43 +153,39 @@ client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Na
 
 # Filtered DataFrame
 filtered_df = df
-# Dictionary to map month names to their order
+
+# Create a 'Month-Year' column
+filtered_df['Month-Year'] = filtered_df['Start Date Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
 
 
-months = filtered_df['Start Date Month'].unique()
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order[month])
 
-months = sorted(months, key=lambda x: month_order[x])
+# Extract unique month-year combinations and sort them
+month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
 
-# Select slider for month range
-selected_month_range = st.select_slider(
-    "Select Start Date Month Range",
-    options=months,
-    value=(months[0], months[-1])
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
 )
 
-# Filter DataFrame based on selected month range
-start_month, end_month = selected_month_range
-start_index = month_order[start_month]
-end_index = month_order[end_month]
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
 
-# Filter DataFrame based on month order indices
-filtered_df = filtered_df[filtered_df['Start Date Month'].apply(lambda x: month_order[x]).between(start_index, end_index)]
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
 
+# Filter DataFrame based on month-year order indices
+filtered_df = filtered_df[
+    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+]
 
-# Calculate min, median, and max
-min_value = filtered_df["Average Premium per Principal Member"].min()
-max_value = filtered_df["Average Premium per Principal Member"].max()
-
-    # Display the slider
-slider_values = st.slider(
-        "Select Average Premium per Principal Member range",
-        min_value=float(min_value),
-        max_value=float(max_value),
-        value=(float(min_value), float(max_value)),
-        step=1.0
-    )
-
-filtered_df = filtered_df[(filtered_df['Average Premium per Principal Member'] >= slider_values[0]) & (filtered_df['Average Premium per Principal Member'] <= slider_values[1])]
 
 # Apply filters to the DataFrame
 if year:
@@ -428,7 +471,7 @@ if not filtered_df.empty:
             client_segment_data = filtered_df[filtered_df['Client Segment'] == client_segment]
             
             fig_iqr.add_trace(go.Box(
-                x=client_segment_data['Start Date Year'],
+                x=client_segment_data['Start Date Year'].astype(str) + ' - ' + client_segment,
                 y=client_segment_data['Total Premium'],
                 name=client_segment,
                 boxmean='sd',  # Shows mean and standard deviation
@@ -618,10 +661,12 @@ if not filtered_df.empty:
     df_grouped = filtered_df.groupby(['Client Name', 'Client Segment'])['Total Premium'].sum().reset_index()
 
     # Get the top 10 clients by Total Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total Premium'].sum().nlargest(20).reset_index()
+    top_10_clients = df_grouped.groupby('Client Name')['Total Premium'].sum().nlargest(15).reset_index()
 
     # Filter the original DataFrame to include only the top 10 clients
     client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
+    # Sort the client_df by Total Premium in descending order
+    client_df = client_df.sort_values(by='Total Premium', ascending=False)
 
     with cul2:
         # Create the bar chart
@@ -651,7 +696,7 @@ if not filtered_df.empty:
             )
 
             # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Top 20 Client Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="custom-subheader">Top 15 Client Premium by Client Segment</h2>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     culs1, culs2 = st.columns(2)

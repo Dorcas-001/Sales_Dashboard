@@ -86,23 +86,55 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
+
+
 # Ensure the 'Start Date' column is in datetime format if needed
 df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
 
 
+# Get minimum and maximum dates for the date input
+startDate = df["START DATE"].min()
+endDate = df["START DATE"].max()
 
-# Sidebar for filters
-st.sidebar.header("Filters")
-year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
-month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Date Month'].dropna().unique()))
-channel = st.sidebar.multiselect("Select Channel", options=df['Intermediary'].unique())
-client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
+# Define CSS for the styled date input boxes
+st.markdown("""
+    <style>
+    .date-input-box {
+        border-radius: 10px;
+        text-align: left;
+        margin: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .date-input-title {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Filtered DataFrame
-filtered_df = df
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
 
-# Extract unique months from the "Start Date Month" column
-months = filtered_df['Start Date Month'].unique()
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+df = df[(df["START DATE"] >= date1) & (df["START DATE"] <= date2)].copy()
+
 
 # Sort months based on the predefined order
 month_order = {
@@ -110,40 +142,50 @@ month_order = {
     "May": 5, "June": 6, "July": 7, "August": 8, 
     "September": 9, "October": 10, "November": 11, "December": 12
 }
-months = sorted(months, key=lambda x: month_order[x])
+sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
+df['Start Date Year'] = pd.to_numeric(df['Start Date Year'], errors='coerce').dropna().astype(int)
 
-# Select slider for month range
-selected_month_range = st.select_slider(
-    "Select Start Date Month Range",
-    options=months,
-    value=(months[0], months[-1])
+# Sidebar for filters
+st.sidebar.header("Filters")
+year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
+month = st.sidebar.multiselect("Select Month", options=sorted_months)
+channel = st.sidebar.multiselect("Select Channel", options=df['Intermediary'].unique())
+client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
+
+# Filtered DataFrame
+filtered_df = df.copy()
+
+# Create a 'Month-Year' column
+filtered_df['Month-Year'] = filtered_df['Start Date Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
+
+
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order[month])
+
+# Extract unique month-year combinations and sort them
+month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
+
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
 )
 
-# Filter DataFrame based on selected month range
-start_month, end_month = selected_month_range
-start_index = month_order[start_month]
-end_index = month_order[end_month]
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
 
-# Filter DataFrame based on month order indices
-filtered_df = filtered_df[filtered_df['Start Date Month'].apply(lambda x: month_order[x]).between(start_index, end_index)]
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
 
-
-# Calculate min, median, and max
-min_value = filtered_df["Average Premium per Principal Member"].min()
-max_value = filtered_df["Average Premium per Principal Member"].max()
-
-    # Display the slider
-slider_values = st.slider(
-        "Select Average Premium per Principal Member range",
-        min_value=float(min_value),
-        max_value=float(max_value),
-        value=(float(min_value), float(max_value)),
-        step=1.0
-    )
-
-filtered_df = filtered_df[(filtered_df['Average Premium per Principal Member'] >= slider_values[0]) & (filtered_df['Average Premium per Principal Member'] <= slider_values[1])]
-
-
+# Filter DataFrame based on month-year order indices
+filtered_df = filtered_df[
+    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+]
 
 # Apply filters to the DataFrame
 if year:
@@ -452,8 +494,9 @@ if not filtered_df.empty:
         for idx, intermediary in enumerate(filtered_df['Intermediary'].unique()):
             intermediary_data = filtered_df[filtered_df['Intermediary'] == intermediary]
             
+            # Modified x values to include both year and intermediary
             fig_iqr.add_trace(go.Box(
-                x=intermediary_data['Start Date Year'],
+                x=intermediary_data['Start Date Year'].astype(str) + ' - ' + intermediary,
                 y=intermediary_data['Total Premium'],
                 name=intermediary,
                 boxmean='sd',  # Shows mean and standard deviation
@@ -545,7 +588,8 @@ if not filtered_df.empty:
 
     # Filter the original DataFrame to include only the top 10 clients
     client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
-
+    # Sort the client_df by Total Premium in descending order
+    client_df = client_df.sort_values(by='Total Premium', ascending=False)
    
     with cul2:
             # Create the bar chart
