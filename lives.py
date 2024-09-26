@@ -363,37 +363,37 @@ if not filtered_df.empty:
 
     custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
     with cul1:
-        fig1, ax1 = plt.subplots()
+        # Set the figure size to a height of 450
+        fig1, ax1 = plt.subplots(figsize=(10, 9))  # Adjust the width and height as needed
 
-            # Pivot the DataFrame for easier plotting
-        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE',columns='Cover Type', values='Total lives').fillna(0)
+        # Pivot the DataFrame for easier plotting
+        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Cover Type', values='Total lives').fillna(0)
             
         # Plot the stacked area chart
         pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
 
-            # Remove the border around the chart
+        # Remove the border around the chart
         ax1.spines['top'].set_visible(False)
         ax1.spines['right'].set_visible(False)
         ax1.spines['left'].set_visible(False)
         ax1.spines['bottom'].set_visible(False)
 
-            # Set x-axis title
+        # Set x-axis title
         ax1.set_xlabel("Date", fontsize=9, color="gray")
         plt.xticks(rotation=45, fontsize=9, color="gray")
 
-            # Set y-axis title
+        # Set y-axis title
         ax1.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
         plt.yticks(fontsize=9, color="gray")
 
-            # Set chart title
+        # Set chart title
         st.markdown('<h2 class="custom-subheader">Total Lives Covered by Cover Type over Time</h2>', unsafe_allow_html=True)
 
-    
-
-            # Display the chart in Streamlit
+        # Display the chart in Streamlit
         st.pyplot(fig1)
 
- # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
+
+    # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
     yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
         'No. of Principal Member': 'sum',
         'Dependents': 'sum'
@@ -439,7 +439,7 @@ if not filtered_df.empty:
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             margin=dict(l=0, r=0, t=30, b=50),
-            height=450
+            height=400
         )
 
         # Display the chart in Streamlit
@@ -616,7 +616,7 @@ if not filtered_df.empty:
     int_premiums = filtered_df.groupby("Intermediary")["Total lives"].sum().reset_index()
     int_premiums.columns = ["Intermediary", "Total lives"]
 
-    
+
     cols1, cols2 = st.columns(2)
 
     with cols1:
