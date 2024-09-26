@@ -18,7 +18,7 @@ st.set_page_config(
 logo_url = 'EC_logo.png'  
 st.sidebar.image(logo_url, use_column_width=True)
 
-page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Overview", "Channel View", "Client Segment View"])
+page = st.sidebar.selectbox("Choose a dashboard", ["Home", "Overview", "Channel View", "Client Segment View", "Lives Covered"])
 
 st.markdown(
     """
@@ -102,3 +102,5 @@ elif page == "Channel View":
     exec(open("intermediary.py").read())
 elif page == "Client Segment View":
     exec(open("segment.py").read())
+elif page == "Lives Covered View":
+    exec(open("lives.py").read())
