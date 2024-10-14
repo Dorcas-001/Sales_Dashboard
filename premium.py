@@ -457,7 +457,7 @@ if not df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Monthly Premium Distribution by Product</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Monthly Sales Distribution by Product</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
 
@@ -492,7 +492,7 @@ if not df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Monthly Premium Distribution by Owner</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Monthly Sales Distribution by Owner</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
     cl1, cl2 =st.columns(2)
