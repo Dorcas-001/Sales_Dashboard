@@ -55,11 +55,9 @@ df4['Target'] = df4['Target'] * (9 / 12)
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
 df4 = pd.concat([df4]*9, ignore_index=True)
 df4['Start Month'] = months * (len(df4) // len(months))
-st.write(df4)
 
 
 df = pd.concat([df0, df1, df4])
-st.write(df)
 # Sidebar styling and logo
 st.markdown("""
     <style>
@@ -110,6 +108,7 @@ st.markdown("""
 
 # Ensure the 'Start Date' column is in datetime format if needed
 df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
+
 
 month_order = {
     "January": 1, "February": 2, "March": 3, "April": 4, 
@@ -631,7 +630,7 @@ if not df.empty:
         plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        ax2.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
+        ax2.set_ylabel("Total Premium", fontsize=9, color="gray")
         plt.yticks(fontsize=9, color="gray")
 
         # Set chart title

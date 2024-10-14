@@ -335,53 +335,63 @@ if not filtered_df.empty:
 
 
     colc1, colc2 = st.columns(2)
-    
-    # Function to format y-axis labels in millions
+    # Sample function to format y-axis labels
     def millions(x, pos):
         'The two args are the value and tick position'
-        return '%1.0fM' % (x * 1e-6)
+        return '%1.1fM' % (x * 1e-6)
+
+    # Assuming filtered_df is already defined and contains the necessary data
+    # Ensure 'START DATE' is in datetime format
+    filtered_df['START DATE'] = pd.to_datetime(filtered_df['START DATE'], errors='coerce')
 
     # Group by day and Client Segment, then sum the Total Premium
-    area_chart_total_insured = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total Premium'].sum().reset_index(name='Total Premium')
+    area_chart_total_insured = (
+        filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total Premium']
+        .sum()
+        .reset_index(name='Total Premium')
+    )
 
     # Sort by the START DATE
     area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
 
+    # Ensure 'Total Premium' is numeric
+    area_chart_total_insured['Total Premium'] = pd.to_numeric(area_chart_total_insured['Total Premium'], errors='coerce')
 
-    with colc1:
-        # Create the area chart for Total Premium
-        fig1, ax1 = plt.subplots()
+    # Check if the DataFrame is empty before plotting
+    if not area_chart_total_insured.empty:
+        with colc1:
+            # Create the area chart for Total Premium
+            fig1, ax1 = plt.subplots()
 
-        # Pivot the DataFrame for easier plotting
-        pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Client Segment', values='Total Premium').fillna(0)
-        
-        # Plot the stacked area chart
-        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
+            # Pivot the DataFrame for easier plotting
+            pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Client Segment', values='Total Premium').fillna(0)
 
-        # Remove the border around the chart
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
-        ax1.spines['left'].set_visible(False)
-        ax1.spines['bottom'].set_visible(False)
+            # Plot the stacked area chart
+            pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
 
-        # Set x-axis title
-        ax1.set_xlabel("Date", fontsize=9, color="gray")
-        plt.xticks(rotation=45, fontsize=9, color="gray")
+            # Remove the border around the chart
+            ax1.spines['top'].set_visible(False)
+            ax1.spines['right'].set_visible(False)
+            ax1.spines['left'].set_visible(False)
+            ax1.spines['bottom'].set_visible(False)
 
-        # Set y-axis title
-        ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
-        plt.yticks(fontsize=9, color="gray")
+            # Set x-axis title
+            ax1.set_xlabel("Date", fontsize=9, color="gray")
+            plt.xticks(rotation=45, fontsize=9, color="gray")
 
-        # Format the y-axis
-        formatter = FuncFormatter(millions)
-        ax1.yaxis.set_major_formatter(formatter)
+            # Set y-axis title
+            ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
+            plt.yticks(fontsize=9, color="gray")
 
-        # Set chart title
-        st.markdown('<h2 class="custom-subheader">Total Premium by Clent Segment Over Time</h2>', unsafe_allow_html=True)
+            # Format the y-axis
+            formatter = FuncFormatter(millions)
+            ax1.yaxis.set_major_formatter(formatter)
 
-        # Display the chart in Streamlit
-        st.pyplot(fig1)
+            # Set chart title
+            st.markdown('<h2 class="custom-subheader">Total Premium by Client Segment Over Time</h2>', unsafe_allow_html=True)
 
+            # Display the chart in Streamlit
+            st.pyplot(fig1)
     # Group by day and Client Segment, then sum the Total Lives
     area_chart_total_lives = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total lives'].sum().reset_index(name='Total lives')
 
