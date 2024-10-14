@@ -26,7 +26,7 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">YTD PREMIUM DASHBOARD</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">PREMIUM VIEW</h1>', unsafe_allow_html=True)
 
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
@@ -49,6 +49,13 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Date'].dt.year == 2024]
+
+df4['Target'] = df4['Target'] * (9 / 12)
+# Add a 'Month' column for filtering
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
+df4 = pd.concat([df4]*9, ignore_index=True)
+df4['Start Month'] = months * (len(df4) // len(months))
+st.write(df4)
 
 
 df = pd.concat([df0, df1, df4])
@@ -104,11 +111,16 @@ st.markdown("""
 # Ensure the 'Start Date' column is in datetime format if needed
 df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
-df['Target'] = df['Target'] * (9 / 12)
-
+month_order = {
+    "January": 1, "February": 2, "March": 3, "April": 4, 
+    "May": 5, "June": 6, "July": 7, "August": 8, 
+    "September": 9, "October": 10, "November": 11, "December": 12
+}
+# Sort months based on their order
+sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_order[x])
 # Sidebar for filters
 st.sidebar.header("Filters")
-month = st.sidebar.multiselect("Select Month", options=sorted(df['Start Month'].dropna().unique()))
+month = st.sidebar.multiselect("Select Month", options=sorted_months)
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 product = st.sidebar.multiselect("Select Product", options=df['Product'].unique())
 owner = st.sidebar.multiselect("Select Owner", options=df['Owner'].unique())
@@ -147,11 +159,12 @@ if channel_name:
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
-    filter_description = "All df"
+    filter_description = "All data"
 
 if not df.empty:
      # Calculate metrics
-    scaling_factor = 1_000_000  # For millions
+    scaling_factor = 1_000_000_000
+    scale=1_000_000  # For millions
 
     total_pre = df0["Total Premium"].sum()
     total_in_pre = df["Total Premium"].sum()
@@ -207,10 +220,10 @@ if not df.empty:
 
 
     # Display metrics
-    display_metric(col1, "Total Premuim", f"RWF {total_pre_scaled:.0f} M")
-    display_metric(col2, "Total Premium with Endorsement", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col3, "Target Premium", f"RWF {total_target:.0f} M")
-    display_metric(col1, "Variance", f"RWF {variance:.0f} M")
+    display_metric(col1, f"Total Premuim ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.1f} B")
+    display_metric(col2, "Total Premium with Endorsement", f"RWF {total_in_pre_scaled:.1f} B")
+    display_metric(col3, f"Target Premium ({filter_description.strip()})", value=f"RWF{total_target:.1f} B")
+    display_metric(col1, "Variance", f"RWF {variance:.1f} B")
     display_metric(col2, "Percentage Variance", f"RWF {percent_var:.0f} %")
 
 
@@ -586,7 +599,7 @@ if not df.empty:
         ax1.yaxis.set_major_formatter(formatter)
 
         # Set chart title
-        st.markdown('<h2 class="custom-subheader">Total Premium by Clent Segment Over Time</h2>', unsafe_allow_html=True)
+        st.markdown('<h2 class="custom-subheader">Total Premium by Product Over Time</h2>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
         st.pyplot(fig1)
@@ -665,7 +678,7 @@ if not df.empty:
             )
 
             # Display the chart in Streamlit
-    st.markdown('<h2 class="custom-subheader">Top 15 Client Premium by Client Segment</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="custom-subheader">Client Premium by Owners</h2>', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
 
   
