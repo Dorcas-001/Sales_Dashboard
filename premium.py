@@ -172,7 +172,7 @@ if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
     filter_description = "All data"
-st.write(df)
+
 if not df.empty:
      # Calculate metrics
     scaling_factor = 1_000_000_000
