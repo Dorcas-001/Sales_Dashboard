@@ -573,7 +573,7 @@ if not filtered_df.empty:
         # Set layout for the Total Premium chart
         fig_monthly_premium.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Start Date",
+            xaxis_title="Month",
             yaxis_title="Total Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),

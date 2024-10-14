@@ -234,31 +234,26 @@ if not filtered_df.empty:
     total_lives = filtered_df["Total lives"].sum()
     total_mem = filtered_df["No. of Principal Member"].sum()
     total_dependents = filtered_df["Dependents"].sum()
-    average_dep = filtered_df["Average Number of Dependents per Employee"].sum()
-    average_pre = filtered_df["Average Premium per Principal Member"].sum()
-    average_premium_per_life = filtered_df["Total Premium"].mean()
-    gwp_average = total_clients * total_lives * average_premium_per_life
+    average_dep = filtered_df["Average Number of Dependents per Employee"].mean()
+    average_pre = filtered_df["Average Premium per Principal Member"].mean()
+    average_premium_per_life = total_in_pre/total_lives
+    gwp_average = total_lives * average_premium_per_life / total_clients
 
     dependency_ratio = total_dependents / total_mem
 
 
 
     # Scale the sums
-    total_pre_scaled = total_pre / scaling_factor
-    total_in_pre_scaled = total_in_pre / scaling_factor
+    total_pre_scaled = total_pre / scaled
+    total_in_pre_scaled = total_in_pre / scaled
     average_pre_scaled = average_pre/scaling_factor
-    gwp_average_scaled = gwp_average/scaled
+    gwp_average_scaled = gwp_average/scaling_factor
 
     scale = 1_000
-    # Calculate the median premium per employer group
-    grouped = filtered_df.groupby('Client Name')['Average Premium per Principal Member'].median().reset_index()
-    grouped.columns = ['Client Name', 'Median Premium']
-    # Calculate key metrics
-    median_premium = (grouped['Median Premium'].median())/scale
-    Q1 = (grouped['Median Premium'].quantile(0.25))/scale
-    Q3 = (grouped['Median Premium'].quantile(0.75))/scale
-    IQR = Q3 - Q1
 
+    # Calculate key metrics
+    lowest_premium = filtered_df['Total Premium'].min() / scale
+    highest_premium = filtered_df['Total Premium'].max() / scaling_factor
 
     # Create 4-column layout for metric cards# Define CSS for the styled boxes and tooltips
     st.markdown("""
@@ -342,15 +337,14 @@ if not filtered_df.empty:
     # Display metrics
     col1, col2, col3= st.columns(3)
     display_metric(col1, "Total Clients", total_clients, "The total number of clients.")
-    display_metric(col2, "Total Basic Premium", f"RWF {total_pre_scaled:.0f} M", "The total basic premium in millions of RWF.")
-    display_metric(col3, "Total Insured Premium", f"RWF {total_in_pre_scaled:.0f} M", "The total insured premium in millions of RWF.")
+    display_metric(col2, "Total Basic Premium", f"RWF {total_pre_scaled:.1f} B", "The total basic premium in millions of RWF.")
+    display_metric(col3, "Total Premium", f"RWF {total_in_pre_scaled:.1f} B", "The total insured premium in millions of RWF.")
     
     display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M", "The average insured premium per principal member in millions of RWF.")
-    display_metric(col2, "Average GWP", f"RWF {gwp_average_scaled:.0f} B", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
-    display_metric(col3, "Median Premium", f"RWF {median_premium:.0f} K","Half of the employer groups have median premiums below RWF 718K per life covered, and the other half have premiums above this value")
-    display_metric(col1, "First Quartile (Q1)", f"RWF {Q1:.0f} K","This means that 25% of the employer groups have median premiums below RWF 521079.98 per life covered. Showing that a significant portion of employer groups are paying premiums at or below this amount.")
-    display_metric(col2, "Third Quartile (Q3)", f"RWF {Q3:.0f} K", "75% of the employer groups have median premiums below RWF 1191716.81 per life covered. Showing that a substantial portion of employer groups are paying premiums at or below this amount.")
-    display_metric(col3, "Interquartile Range (IQR)", f"RWF {IQR:.0f} K","It indicates that half of the employer groups have median premiums ranging from RWF 521079.98 to RWF 1191716.81 per lif covered. An IQR of RWF 670636.84 suggests that, most employer groups pay similar amounts for their premiums.")
+    display_metric(col2, "Average GWP", f"RWF {gwp_average_scaled:.0f} M", "The average Gross Written Premium in billions of RWF (total number of clients x total lives covered x average Premium per life")
+    display_metric(col3, "Lowest Premium", f"RWF {lowest_premium:.0f} K","This means that 25% of the employer groups have median premiums below RWF 521079.98 per life covered. Showing that a significant portion of employer groups are paying premiums at or below this amount.")
+    display_metric(col1, "Highest Premium", f"RWF {highest_premium:.0f} M", "75% of the employer groups have median premiums below RWF 1191716.81 per life covered. Showing that a substantial portion of employer groups are paying premiums at or below this amount.")
+
 
 
 
