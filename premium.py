@@ -46,16 +46,29 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
-
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Date'].dt.year == 2024]
 
 df4['Target'] = df4['Target'] * (9 / 12)
+
+df4['Target'] = df4['Target'] / 9
+
 # Add a 'Month' column for filtering
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
+
+# Create a DataFrame for each month from January to September
+expanded_rows = []
+for _, row in df4.iterrows():
+    for month in months:
+        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
+
+# Create the expanded DataFrame
+df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
+
+
+
 df4 = pd.concat([df4]*9, ignore_index=True)
 df4['Start Month'] = months * (len(df4) // len(months))
-
 
 df = pd.concat([df0, df1, df4])
 # Sidebar styling and logo
@@ -159,7 +172,7 @@ if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
     filter_description = "All data"
-
+st.write(df)
 if not df.empty:
      # Calculate metrics
     scaling_factor = 1_000_000_000
@@ -223,7 +236,7 @@ if not df.empty:
     display_metric(col2, "Total Premium with Endorsement", f"RWF {total_in_pre_scaled:.1f} B")
     display_metric(col3, f"Target Premium ({filter_description.strip()})", value=f"RWF{total_target:.1f} B")
     display_metric(col1, "Variance", f"RWF {variance:.1f} B")
-    display_metric(col2, "Percentage Variance", f"RWF {percent_var:.0f} %")
+    display_metric(col2, f"Percentage Variance ({filter_description.strip()})", value=f"RWF {percent_var:.0f} %")
 
 
 
