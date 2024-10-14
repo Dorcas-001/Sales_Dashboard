@@ -76,11 +76,11 @@ df4 = pd.concat([df4]*9, ignore_index=True)
 df4['Start Month'] = months * (len(df4) // len(months))
 df4['Start Year'] = 2024
 
-st.write(df4)
+
 
 
 df = pd.concat([df0, df1, df4])
-st.write(df)
+
 
 # Ensure the 'Start Date' column is in datetime format if needed
 df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
