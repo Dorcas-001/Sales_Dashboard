@@ -50,7 +50,7 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 df1 = df1[df1['Start Date'].dt.year == 2024]
 
      # Calculate metrics
-scaling_factor = 1_000_000_000
+scaling_factor = 1_000_000
 
 target_2024 = (df4["Target"].sum())/scaling_factor
 
@@ -74,8 +74,18 @@ df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Mo
 
 df4 = pd.concat([df4]*9, ignore_index=True)
 df4['Start Month'] = months * (len(df4) // len(months))
+df4['Start Year'] = 2024
+
+st.write(df4)
+
 
 df = pd.concat([df0, df1, df4])
+st.write(df)
+
+# Ensure the 'Start Date' column is in datetime format if needed
+df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
+
+
 # Sidebar styling and logo
 st.markdown("""
     <style>
@@ -124,8 +134,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# Ensure the 'Start Date' column is in datetime format if needed
-df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
 
 month_order = {
@@ -178,19 +186,69 @@ if client_name:
 if not filter_description:
     filter_description = "All data"
 
+
+df['Start Year'] = df['Start Year'].astype(int)
+
+# Create a 'Month-Year' column
+df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
+
+
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order[month])
+
+# Extract unique month-year combinations and sort them
+month_years = sorted(df['Month-Year'].unique(), key=sort_key)
+
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
+)
+
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
+
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
+
+# Filter DataFrame based on month-year order indices
+df = df[
+    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+]
+
+# Filter the concatenated DataFrame to include only endorsements
+df_endorsements_only = df[df['Type'] == 'Endorsement']
+df_new = df[df['Product'] == 'New']
+df_renew = df[df['Product'] == 'Renewals']
+df_proactiv = df[df['Product'] == 'ProActiv']
+
+
+# Calculate the total premium for endorsements only
+# Assuming the column name for the premium is 'Total Premium'
+
 if not df.empty:
      # Calculate metrics
-    scaling_factor = 1_000_000_000
     scale=1_000_000  # For millions
 
-    total_pre = df0["Total Premium"].sum()
+    total_pre = df["Total Premium"].sum()
     total_in_pre = df["Total Premium"].sum()
-    total_target = (df["Target"].sum())/scaling_factor
+    total_target = (df["Target"].sum())/scale
     # Scale the sums
-    total_pre_scaled = total_pre / scaling_factor
-    total_in_pre_scaled = total_in_pre / scaling_factor
+    total_pre_scaled = total_pre / scale
+    total_in_pre_scaled = total_in_pre / scale
     variance = total_in_pre_scaled-total_target
     percent_var = (variance/total_target) *100
+
+    total_endorsement_premium = (df_endorsements_only['Total Premium'].sum())/scale
+    total_new = (df_new['Total Premium'].sum())/scale
+    total_renew = (df_renew['Total Premium'].sum())/scale
+    total_pro = (df_proactiv['Total Premium'].sum())/scale
+
     # Create 4-column layout for metric cards
     col1, col2, col3 = st.columns(3)
 
@@ -237,13 +295,15 @@ if not df.empty:
 
 
     # Display metrics
-    display_metric(col1, f"Total Premuim ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.1f} B")
-    display_metric(col2, "Total Premium with Endorsement", f"RWF {total_in_pre_scaled:.1f} B")
-    display_metric(col3, "2024 Target", f"RWF {target_2024:.1f} B")
-    display_metric(col1, f"Target Premium ({filter_description.strip()})", value=f"RWF{total_target:.1f} B")
-    display_metric(col2, "Variance", f"RWF {variance:.1f} B")
+    display_metric(col1, f"Total Premuim ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
+    display_metric(col2, "Total Endorsement", f"RWF {total_endorsement_premium:.0f} M")
+    display_metric(col3, "2024 Target", f"RWF {target_2024:.0f} M")
+    display_metric(col1, f"Target Premium ({filter_description.strip()})", value=f"RWF {total_target:.0f} M")
+    display_metric(col2, "Variance", f"RWF {variance:.0f} M")
     display_metric(col3, f"Percentage Variance ({filter_description.strip()})", value=f"RWF {percent_var:.0f} %")
-
+    display_metric(col1, f"Total New Sales({filter_description.strip()})", value=f"RWF {total_new:.0f} M")
+    display_metric(col2, F"Total Renewal ({filter_description.strip()})", value=f"RWF {total_renew:.0f} M")
+    display_metric(col3, f"Total ProActiv Sales ({filter_description.strip()})", value=f"RWF {total_pro:.0f} M")
 
 
    
