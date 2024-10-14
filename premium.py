@@ -49,6 +49,11 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Date'].dt.year == 2024]
 
+     # Calculate metrics
+scaling_factor = 1_000_000_000
+
+target_2024 = (df4["Target"].sum())/scaling_factor
+
 df4['Target'] = df4['Target'] * (9 / 12)
 
 df4['Target'] = df4['Target'] / 9
@@ -234,9 +239,10 @@ if not df.empty:
     # Display metrics
     display_metric(col1, f"Total Premuim ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.1f} B")
     display_metric(col2, "Total Premium with Endorsement", f"RWF {total_in_pre_scaled:.1f} B")
-    display_metric(col3, f"Target Premium ({filter_description.strip()})", value=f"RWF{total_target:.1f} B")
-    display_metric(col1, "Variance", f"RWF {variance:.1f} B")
-    display_metric(col2, f"Percentage Variance ({filter_description.strip()})", value=f"RWF {percent_var:.0f} %")
+    display_metric(col3, "2024 Target", f"RWF {target_2024:.1f} B")
+    display_metric(col1, f"Target Premium ({filter_description.strip()})", value=f"RWF{total_target:.1f} B")
+    display_metric(col2, "Variance", f"RWF {variance:.1f} B")
+    display_metric(col3, f"Percentage Variance ({filter_description.strip()})", value=f"RWF {percent_var:.0f} %")
 
 
 
