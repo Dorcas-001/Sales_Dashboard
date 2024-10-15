@@ -26,7 +26,7 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">PREMIUM VIEW</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">SALES AND TARGET VIEW</h1>', unsafe_allow_html=True)
 
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
