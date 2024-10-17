@@ -107,6 +107,6 @@ elif page == "Lives Covered View":
 elif page == "Closed Sales View":
     exec(open("closed_sales.py").read())
 elif page == "Sales Team View":
-    exec(open("sales_team.py").read())
+    exec(open("Sales_team.py").read())
 elif page == "Sales vs Target View":
     exec(open("premium.py").read())
