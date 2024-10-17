@@ -28,14 +28,10 @@ st.markdown('''
 
 st.markdown('<h1 class="main-title">LIVES COVERED VIEW</h1>', unsafe_allow_html=True)
 
-filepath="closed_sales Data - Copy.xlsx"
-sheet_name = "Closed Sales Data"
-# Read the data with additional parameters
-data = pd.read_excel(filepath, sheet_name=sheet_name)
-
-# Identify the index of the last relevant row containing "REM LIMITED"
-last_relevant_index = data[data['Client Name'] == 'REM LIMITED'].index[0]
-df = data.iloc[:last_relevant_index + 1]
+filepath="WRITTEN PREMIUM 2024.xlsx"
+sheet_name = "NEW BUSINES"
+# Read all sheets into a dictionary of DataFrames
+df = pd.read_excel(filepath, sheet_name=sheet_name)
 
 # Sidebar styling and logo
 st.markdown("""
@@ -86,7 +82,7 @@ st.markdown("""
 
 
 # Ensure the 'Start Date' column is in datetime format if needed
-df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
+df["START DATE"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
 
 # Get minimum and maximum dates for the date input
@@ -140,9 +136,9 @@ month_order = {
     "September": 9, "October": 10, "November": 11, "December": 12
 }
 
-df['Start Date Year'] = pd.to_numeric(df['Start Date Year'], errors='coerce').dropna().astype(int)
+df['Start Date Year'] = pd.to_numeric(df['Start Year'], errors='coerce').dropna().astype(int)
 # Sort months based on their order
-sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
+sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_order[x])
 
 
 # Sidebar for filters
@@ -150,7 +146,9 @@ st.sidebar.header("Filters")
 year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
-channel = st.sidebar.multiselect("Select Channel", options=df['Intermediary'].unique())
+product = st.sidebar.multiselect("Select Product", options=df['Product_name'].unique())
+channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
+channel_name = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 # Filtered DataFrame
@@ -158,7 +156,7 @@ filtered_df = df
 
 
 # Create a 'Month-Year' column
-filtered_df['Month-Year'] = filtered_df['Start Date Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
+filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
 
 
 # Function to sort month-year combinations
@@ -194,11 +192,15 @@ filtered_df = filtered_df[
 if year:
     filtered_df = filtered_df[filtered_df['Start Date Year'].isin(year)]
 if month:
-    filtered_df = filtered_df[filtered_df['Start Date Month'].isin(month)]
+    filtered_df = filtered_df[filtered_df['Start Month'].isin(month)]
 if segment:
     filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
 if channel:
-    filtered_df = filtered_df[filtered_df['Intermediary'].isin(channel)]
+    filtered_df = filtered_df[filtered_df['Channel'].isin(channel)]
+if channel_name:
+    filtered_df = filtered_df[filtered_df['Intermediary name'].isin(channel_name)]
+if product:
+    filtered_df = filtered_df[filtered_df['Product_name'].isin(product)]
 if client_name:
     filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
 
@@ -213,6 +215,10 @@ if channel:
     filter_description += f"{', '.join(map(str, channel))} "
 if month:
     filter_description += f"{', '.join(month)} "
+if channel_name:
+    filter_description += f"{', '.join(map(str, channel_name))} "
+if product:
+    filter_description += f"{', '.join(product)} "
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
@@ -223,7 +229,7 @@ if not filter_description:
 if not filtered_df.empty:  
 
     # Create 4-column layout for metric cards
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -270,13 +276,15 @@ if not filtered_df.empty:
     scaling_factor = 1_000_000  # For millions
     scaled = 1_000_000_000  # for billions
 
+    filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
+
     total_clients = filtered_df["Client Name"].nunique()
     total_in_pre = filtered_df["Total Premium"].sum()
     total_lives = filtered_df["Total lives"].sum()
-    total_mem = filtered_df["No. of Principal Member"].sum()
+    total_mem = filtered_df["No. of staffs"].sum()
     total_dependents = filtered_df["Dependents"].sum()
-    average_dep = filtered_df["Average Number of Dependents per Employee"].sum()
-    average_pre = filtered_df["Average Premium per Principal Member"].sum()
+    average_dep = total_mem/total_dependents
+    average_pre = total_in_pre/total_mem
     average_premium_per_life = filtered_df["Total Premium"].mean()
     gwp_average = total_clients * total_lives * average_premium_per_life
 
@@ -299,14 +307,13 @@ if not filtered_df.empty:
     Q3 = (grouped['Median lives'].quantile(0.75))
     IQR = Q3 - Q1
 
-    display_metric(col1, "Total Lives", total_lives)
-    display_metric(col2, "Total Principal Members", total_mem)
-    display_metric(col3, "Total Dependents", total_dependents)
-    display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
-    display_metric(col1, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
-    display_metric(col2, "Dependency Ratio", f"{dependency_ratio:.1f}")
-    display_metric(col3, "Median Lives", median_lives)
-    display_metric(col4, "Interquartile Range (IQR)", IQR)
+    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Lives", total_lives)
+    display_metric(col3, "Total Principal Members", total_mem)
+    display_metric(col1, "Total Dependents", total_dependents)
+    display_metric(col2, "Premium Per Principal Member", f"RWF {average_pre_scaled:.1f} M")
+    display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
+
 
 
 
@@ -441,7 +448,7 @@ if not filtered_df.empty:
 
     # Group data by "Start Date Year" and calculate the total number of Principal Members and Dependents
     yearly_totals = filtered_df.groupby(['Start Date Year']).agg({
-        'No. of Principal Member': 'sum',
+        'No. of staffs': 'sum',
         'Dependents': 'sum'
     }).reset_index()
 
@@ -452,7 +459,7 @@ if not filtered_df.empty:
         # Add bars for Principal Members
         fig_yearly_totals.add_trace(go.Bar(
             x=yearly_totals['Start Date Year'],
-            y=yearly_totals['No. of Principal Member'],
+            y=yearly_totals['No. of staffs'],
             name='Principal Member',
             textposition='inside',
             textfont=dict(color='white'),
@@ -473,7 +480,7 @@ if not filtered_df.empty:
 
         fig_yearly_totals.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Month",
+            xaxis_title="Year",
             yaxis_title="Total Lives",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -487,13 +494,13 @@ if not filtered_df.empty:
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
  # Group data by "Start Date Month" and calculate the total number of Principal Members and Dependents
-    yearly_totals = filtered_df.groupby(['Start Date Month']).agg({
-        'No. of Principal Member': 'sum',
+    yearly_totals = filtered_df.groupby(['Start Month']).agg({
+        'No. of staffs': 'sum',
         'Dependents': 'sum'
     }).reset_index()
 
     # Calculate total lives for sorting
-    yearly_totals['Total Lives'] = yearly_totals['No. of Principal Member'] + yearly_totals['Dependents']
+    yearly_totals['Total Lives'] = yearly_totals['No. of staffs'] + yearly_totals['Dependents']
 
     # Sort the DataFrame by total lives in descending order
     yearly_totals = yearly_totals.sort_values('Total Lives', ascending=False)
@@ -504,8 +511,8 @@ if not filtered_df.empty:
 
         # Add bars for Principal Members
         fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
-            y=yearly_totals['No. of Principal Member'],
+            x=yearly_totals['Start Month'],
+            y=yearly_totals['No. of staffs'],
             name='Principal Member',
             textposition='inside',
             textfont=dict(color='white'),
@@ -515,7 +522,7 @@ if not filtered_df.empty:
 
         # Add bars for Dependents
         fig_yearly_totals.add_trace(go.Bar(
-            x=yearly_totals['Start Date Month'],
+            x=yearly_totals['Start Month'],
             y=yearly_totals['Dependents'],
             name='Dependents',
             textposition='inside',
@@ -540,7 +547,7 @@ if not filtered_df.empty:
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
         with st.expander("Principal Members and Dependents Distribution Data"):
-            st.write(df[['Client Name', 'No. of Principal Member','Dependents']].style.background_gradient(cmap="YlOrBr"))
+            st.write(df[['Client Name', 'No. of staffs','Dependents']].style.background_gradient(cmap="YlOrBr"))
 
    
 
@@ -585,7 +592,7 @@ if not filtered_df.empty:
     cls1, cls2 = st.columns(2)
     
     # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
-    monthly_lives_by_segment = data.groupby(['Start Date Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
+    monthly_lives_by_segment = df.groupby(['Start Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
     # Define custom colors (you can define more colors if you have more segments)
     custom_colors = ["#006E7F", "#e66c37", "#B4B4B8", "#f8a785"]
@@ -621,7 +628,7 @@ if not filtered_df.empty:
         st.plotly_chart(fig_monthly_lives_by_segment, use_container_width=True)
 
  # Group data by "Start Date Month" and "Intermediary" and sum the Total Lives
-    monthly_lives_by_intermediary = data.groupby(['Start Date Month', 'Intermediary'])['Total lives'].sum().unstack().fillna(0)
+    monthly_lives_by_intermediary = df.groupby(['Start Month', 'Channel'])['Total lives'].sum().unstack().fillna(0)
 
     with cls1:
         # Define custom colors (you can define more colors if you have more intermediaries)
@@ -658,8 +665,8 @@ if not filtered_df.empty:
 
 
     # Calculate the total insured premium by intermediary
-    int_premiums = filtered_df.groupby("Intermediary")["Total lives"].sum().reset_index()
-    int_premiums.columns = ["Intermediary", "Total lives"]
+    int_premiums = filtered_df.groupby("Channel")["Total lives"].sum().reset_index()
+    int_premiums.columns = ["Channel", "Total lives"]
 
 
     cols1, cols2 = st.columns(2)
@@ -672,7 +679,7 @@ if not filtered_df.empty:
         custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
 
         # Create a donut chart
-        fig = px.pie(int_premiums, names="Intermediary", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig = px.pie(int_premiums, names="Channel", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
         fig.update_traces(textposition='inside', textinfo='value')
         fig.update_layout(height=350, margin=dict(l=10, r=10, t=30, b=80))
 
@@ -680,7 +687,7 @@ if not filtered_df.empty:
         st.plotly_chart(fig, use_container_width=True, height=200)
 
         with st.expander("Total Lives by Channel Data"):
-            st.write(df[['Total lives', 'Intermediary']].style.background_gradient(cmap="YlOrBr"))
+            st.write(df[['Total lives', 'Channel']].style.background_gradient(cmap="YlOrBr"))
 
         # Calculate the total insured premium by client segment
     int_premiums = filtered_df.groupby("Client Segment")["Total lives"].sum().reset_index()
@@ -723,7 +730,7 @@ if not filtered_df.empty:
             data=filtered_df,
             values="Total lives",
             index=["Client Segment"],
-            columns="Start Date Month"
+            columns="Start Month"
         )
         st.write(sub_specialisation_Year.style.background_gradient(cmap="YlOrBr"))
         

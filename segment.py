@@ -29,14 +29,10 @@ st.markdown('''
 
 st.markdown('<h1 class="main-title">CLIENT SEGMENT VIEW </h1>', unsafe_allow_html=True)
 
-filepath="closed_sales Data - Copy.xlsx"
-sheet_name = "Closed Sales Data"
-# Read the data with additional parameters
-data = pd.read_excel(filepath, sheet_name=sheet_name)
-
-# Identify the index of the last relevant row containing "REM LIMITED"
-last_relevant_index = data[data['Client Name'] == 'REM LIMITED'].index[0]
-df = data.iloc[:last_relevant_index + 1]
+filepath="WRITTEN PREMIUM 2024.xlsx"
+sheet_name = "NEW BUSINES"
+# Read all sheets into a dictionary of DataFrames
+df = pd.read_excel(filepath, sheet_name=sheet_name)
 
 # Sidebar styling and logo
 st.markdown("""
@@ -47,7 +43,7 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    .sidebar .sidebar-content h2 {
+    .sidebar .sidebar-content h3 {
         color: #007BFF; /* Change this color to your preferred title color */
         font-size: 1.5em;
         margin-bottom: 20px;
@@ -83,17 +79,18 @@ st.markdown("""
     }
             
     </style>
+        
     """, unsafe_allow_html=True)
 
 
-
 # Ensure the 'Start Date' column is in datetime format if needed
-df["START DATE"] = pd.to_datetime(df["START DATE"], errors='coerce')
+df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
+
 
 
 # Get minimum and maximum dates for the date input
-startDate = df["START DATE"].min()
-endDate = df["START DATE"].max()
+startDate = df["Start Date"].min()
+endDate = df["Start Date"].max()
 
 # Define CSS for the styled date input boxes
 st.markdown("""
@@ -111,6 +108,7 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 # Create 2-column layout for date inputs
 col1, col2 = st.columns(2)
@@ -132,7 +130,15 @@ with col2:
     date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
 
 # Filter DataFrame based on the selected dates
-df = df[(df["START DATE"] >= date1) & (df["START DATE"] <= date2)].copy()
+df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
+
+
+
+df['Start Year'] = df['Start Year'].astype(int)
+
+# Create a 'Month-Year' column
+df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
+
 
 
 month_order = {
@@ -141,21 +147,29 @@ month_order = {
     "September": 9, "October": 10, "November": 11, "December": 12
 }
 # Sort months based on their order
-sorted_months = sorted(df['Start Date Month'].dropna().unique(), key=lambda x: month_order[x])
-df['Start Date Year'] = pd.to_numeric(df['Start Date Year'], errors='coerce').dropna().astype(int)
+sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_order[x])
+
+
+# Ensure the 'Start Month' column is in datetime format if needed
+df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
+
+df['Start Year'] = pd.to_numeric(df['Start Year'], errors='coerce').dropna().astype(int)
 
 # Sidebar for filters
 st.sidebar.header("Filters")
-year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'].dropna().unique()))
+year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Year'].dropna().unique()))
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
+product = st.sidebar.multiselect("Select Product", options=df['Product_name'].unique())
+channel = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
+
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 # Filtered DataFrame
 filtered_df = df
 
 # Create a 'Month-Year' column
-filtered_df['Month-Year'] = filtered_df['Start Date Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
+filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Year'].astype(str)
 
 
 # Function to sort month-year combinations
@@ -186,14 +200,17 @@ filtered_df = filtered_df[
     filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
 ]
 
-
 # Apply filters to the DataFrame
 if year:
-    filtered_df = filtered_df[filtered_df['Start Date Year'].isin(year)]
+    filtered_df = filtered_df[filtered_df['Start Year'].isin(year)]
 if month:
-    filtered_df = filtered_df[filtered_df['Start Date Month'].isin(month)]
+    filtered_df = filtered_df[filtered_df['Start Month'].isin(month)]
 if segment:
     filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
+if channel:
+    filtered_df = filtered_df[filtered_df['Intermediary name'].isin(channel)]
+if product:
+    filtered_df = filtered_df[filtered_df['Product_name'].isin(product)]
 if client_name:
     filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
 
@@ -206,6 +223,10 @@ if segment:
     filter_description += f"{', '.join(map(str, segment))} "
 if month:
     filter_description += f"{', '.join(month)} "
+if channel:
+    filter_description += f"{', '.join(map(str, channel))} "
+if product:
+    filter_description += f"{', '.join(product)} "
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
@@ -216,11 +237,23 @@ if not filter_description:
 if not filtered_df.empty:
      # Calculate metrics
     scaling_factor = 1_000_000  # For millions
+    scale = 1_000_000_000
+    df_proactiv = df[df['Product_name'] == 'ProActiv']
+    df_health = df[df['Product_name'] == 'Health']
+
+    # Calculate the total premium for endorsements only
+    # Assuming the column name for the premium is 'Total Premium'
+
+
+    total_pro = (df_proactiv['Total Premium'].sum())/scaling_factor
+    total_health = (df_health['Total Premium'].sum())/scale
+
 
     total_pre = filtered_df["Basic Premium"].sum()
     total_in_pre = filtered_df["Total Premium"].sum()
     total_lives = filtered_df["Total lives"].sum()
-    average_premium_per_life = filtered_df["Total Premium"].mean()
+    total_pm  = filtered_df["No. of staffs"].sum()
+    average_premium_per_life = total_in_pre/total_pm
 
 
     # Scale the sums
@@ -229,7 +262,7 @@ if not filtered_df.empty:
     average_pre_scaled = average_premium_per_life/scaling_factor
 
     # Create 4-column layout for metric cards
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -274,10 +307,12 @@ if not filtered_df.empty:
         
 
     # Display metrics
-    display_metric(col1, "Total Basic Premuim", f"RWF {total_pre_scaled:.0f}M")
-    display_metric(col2, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col3, "Total Lives", total_lives)
-    display_metric(col4, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
+    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Lives", total_lives)
+    display_metric(col3, "Total Principal Members", total_pm)  
+    display_metric(col3, "Total Health Premium", f"RWF {total_health:.0f} B")
+    display_metric(col2, "Total ProActiv Premium", f"RWF {total_pro:.0f} M")
+    display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.1f}M")
 
 
 
@@ -291,7 +326,7 @@ if not filtered_df.empty:
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .sidebar .sidebar-content h2 {
+        .sidebar .sidebar-content h3 {
             color: #007BFF; /* Change this color to your preferred title color */
             font-size: 1.5em;
             margin-bottom: 20px;
@@ -341,18 +376,18 @@ if not filtered_df.empty:
         return '%1.1fM' % (x * 1e-6)
 
     # Assuming filtered_df is already defined and contains the necessary data
-    # Ensure 'START DATE' is in datetime format
-    filtered_df['START DATE'] = pd.to_datetime(filtered_df['START DATE'], errors='coerce')
+    # Ensure 'Start Month' is in datetime format
+    filtered_df['Start Date'] = pd.to_datetime(filtered_df['Start Date'], errors='coerce')
 
     # Group by day and Client Segment, then sum the Total Premium
     area_chart_total_insured = (
-        filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total Premium']
+        filtered_df.groupby([filtered_df["Start Date"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total Premium']
         .sum()
         .reset_index(name='Total Premium')
     )
 
-    # Sort by the START DATE
-    area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
+    # Sort by the Start Month
+    area_chart_total_insured = area_chart_total_insured.sort_values("Start Date")
 
     # Ensure 'Total Premium' is numeric
     area_chart_total_insured['Total Premium'] = pd.to_numeric(area_chart_total_insured['Total Premium'], errors='coerce')
@@ -364,7 +399,7 @@ if not filtered_df.empty:
             fig1, ax1 = plt.subplots()
 
             # Pivot the DataFrame for easier plotting
-            pivot_df_insured = area_chart_total_insured.pivot(index='START DATE', columns='Client Segment', values='Total Premium').fillna(0)
+            pivot_df_insured = area_chart_total_insured.pivot(index='Start Date', columns='Client Segment', values='Total Premium').fillna(0)
 
             # Plot the stacked area chart
             pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
@@ -388,50 +423,61 @@ if not filtered_df.empty:
             ax1.yaxis.set_major_formatter(formatter)
 
             # Set chart title
-            st.markdown('<h2 class="custom-subheader">Total Premium by Client Segment Over Time</h2>', unsafe_allow_html=True)
+            st.markdown('<h3 class="custom-subheader">Total Premium by Client Segment Over Time</h3>', unsafe_allow_html=True)
 
             # Display the chart in Streamlit
             st.pyplot(fig1)
-    # Group by day and Client Segment, then sum the Total Lives
-    area_chart_total_lives = filtered_df.groupby([filtered_df["START DATE"].dt.strftime("%Y-%m-%d"), 'Client Segment'])['Total lives'].sum().reset_index(name='Total lives')
+   # Function to format y-axis labels in millions
+    def millions(x, pos):
+        'The two args are the value and tick position'
+        return '%1.0fM' % (x * 1e-6)
 
-    # Sort by the START DATE
-    area_chart_total_lives = area_chart_total_lives.sort_values("START DATE")
+    # Group by day and Client Segment, then sum the Total Premium
+    area_chart_total_insured = df.groupby([df["Start Date"].dt.strftime("%Y-%m-%d"), 'Product_name'])['Total Premium'].sum().reset_index(name='Total Premium')
+
+    # Sort by the Start Month
+    area_chart_total_insured = area_chart_total_insured.sort_values("Start Date")
+
 
     with colc2:
-        # Create the area chart for Total Lives Covered
-        fig2, ax2 = plt.subplots()
+        # Create the area chart for Total Premium
+        fig1, ax1 = plt.subplots()
 
         # Pivot the DataFrame for easier plotting
-        pivot_df_lives = area_chart_total_lives.pivot(index='START DATE', columns='Client Segment', values='Total lives').fillna(0)
+        pivot_df_insured = area_chart_total_insured.pivot(index='Start Date', columns='Product_name', values='Total Premium').fillna(0)
         
         # Plot the stacked area chart
-        pivot_df_lives.plot(kind='area', stacked=True, ax=ax2, color=custom_colors[:len(pivot_df_lives.columns)])
+        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
 
         # Remove the border around the chart
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-        ax2.spines['left'].set_visible(False)
-        ax2.spines['bottom'].set_visible(False)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
 
         # Set x-axis title
-        ax2.set_xlabel("Date", fontsize=9, color="gray")
+        ax1.set_xlabel("Date", fontsize=9, color="gray")
         plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        ax2.set_ylabel("Total Lives Covered", fontsize=9, color="gray")
+        ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
         plt.yticks(fontsize=9, color="gray")
 
+        # Format the y-axis
+        formatter = FuncFormatter(millions)
+        ax1.yaxis.set_major_formatter(formatter)
+
         # Set chart title
-        st.markdown('<h2 class="custom-subheader">Total Lives Covered by Client Segment Over Time</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Premium by Product Over Time</h3>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.pyplot(fig2)
+        st.pyplot(fig1)
+
 
     cols1,cols2 = st.columns(2)
 
-    # Group data by "Start Date Year" and "Client Segment" and calculate the average Total Premium
-    yearly_avg_premium = filtered_df.groupby(['Start Date Year', 'Client Segment'])['Total Premium'].mean().unstack().fillna(0)
+    # Group data by "Start Month Year" and "Client Segment" and calculate the average Total Premium
+    yearly_avg_premium = filtered_df.groupby(['Start Year', 'Client Segment'])['Average Premium'].mean().unstack().fillna(0)
 
     # Define custom colors
 
@@ -452,7 +498,7 @@ if not filtered_df.empty:
 
         fig_yearly_avg_premium.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Start Date Year",
+            xaxis_title="Start Year",
             yaxis_title="Average Insured Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -462,12 +508,12 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Average Insured Premium Yearly by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Insured Premium Yearly by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
     # Calculate the IQR for each client segment in each year
-    iqr_data = filtered_df.groupby(['Start Date Year', 'Client Segment'])['Total Premium'].describe(percentiles=[.25, .5, .75]).unstack()
+    iqr_data = filtered_df.groupby(['Start Year', 'Client Segment'])['Total Premium'].describe(percentiles=[.25, .5, .75]).unstack()
 
     # Flatten the MultiIndex columns
     iqr_data.columns = ['_'.join(col).strip() for col in iqr_data.columns.values]
@@ -481,7 +527,7 @@ if not filtered_df.empty:
             client_segment_data = filtered_df[filtered_df['Client Segment'] == client_segment]
             
             fig_iqr.add_trace(go.Box(
-                x=client_segment_data['Start Date Year'].astype(str) + ' - ' + client_segment,
+                x=client_segment_data['Start Year'].astype(str) + ' - ' + client_segment,
                 y=client_segment_data['Total Premium'],
                 name=client_segment,
                 boxmean='sd',  # Shows mean and standard deviation
@@ -489,7 +535,7 @@ if not filtered_df.empty:
             ))
 
         fig_iqr.update_layout(
-            xaxis_title="Start Date Year",
+            xaxis_title="Start Year",
             yaxis_title="Total Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -506,7 +552,7 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Interquartile Range of Insured Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Interquartile Range of Total Premium by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_iqr, use_container_width=True)
 
 
@@ -521,7 +567,7 @@ if not filtered_df.empty:
 
     with ccl2:
         with st.expander("Client Names with Q1, Median, and Q3 Premiums by Client Segment"):
-            for (year, client_segment), group in filtered_df.groupby(['Start Date Year', 'Client Segment']):
+            for (year, client_segment), group in filtered_df.groupby(['Start Year', 'Client Segment']):
                 q1 = group['Total Premium'].quantile(0.25)
                 median = group['Total Premium'].median()
                 q3 = group['Total Premium'].quantile(0.75)
@@ -545,11 +591,11 @@ if not filtered_df.empty:
 
     cls1, cls2 = st.columns(2)
 
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Premium
-    monthly_premium = filtered_df.groupby(['Start Date Month', 'Client Segment'])['Total Premium'].sum().unstack().fillna(0)
+    # Group data by "Start Month Month" and "Client Segment" and sum the Total Premium
+    monthly_premium = filtered_df.groupby(['Start Month', 'Client Segment'])['Total Premium'].sum().unstack().fillna(0)
 
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
-    monthly_lives = filtered_df.groupby(['Start Date Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
+    # Group data by "Start Month Month" and "Client Segment" and sum the Total Lives
+    monthly_lives = filtered_df.groupby(['Start Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
 
 
@@ -592,7 +638,7 @@ if not filtered_df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Premium Monthly by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Premium Monthly by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
     with cls2:
@@ -622,7 +668,7 @@ if not filtered_df.empty:
         # Set layout for the Total Lives chart
         fig_monthly_lives.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Start Date",
+            xaxis_title="Start Month",
             yaxis_title="Total Lives Covered",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -631,7 +677,7 @@ if not filtered_df.empty:
         )
 
         # Display the Total Lives chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Total Lives Covered Monthly by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Lives Covered Monthly by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_lives, use_container_width=True)
 
 
@@ -655,7 +701,7 @@ if not filtered_df.empty:
 
     with cul1:
         # Display the header
-        st.markdown('<h2 class="custom-subheader">Total Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Premium by Client Segment</h3>', unsafe_allow_html=True)
 
 
         # Create a donut chart
@@ -706,7 +752,7 @@ if not filtered_df.empty:
             )
 
             # Display the chart in Streamlit
-        st.markdown('<h2 class="custom-subheader">Top 15 Client Premium by Client Segment</h2>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Top 15 Client Premium by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     culs1, culs2 = st.columns(2)
@@ -718,7 +764,7 @@ if not filtered_df.empty:
         with st.expander("Total Premium by Client Segment"):
             st.dataframe(int_premiums.style.format(precision=2))
     # summary table
-    st.markdown('<h3 class="custom-subheader">Month-Wise Insured Premium By Client Segment Table</h2>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">Month-Wise Insured Premium By Client Segment Table</h3>', unsafe_allow_html=True)
 
     with st.expander("Summary_Table"):
 
@@ -729,7 +775,7 @@ if not filtered_df.empty:
             data=filtered_df,
             values="Total Premium",
             index=["Client Segment"],
-            columns="Start Date Month"
+            columns="Start Month"
         )
         st.write(sub_specialisation_Year.style.background_gradient(cmap="YlOrBr"))
     

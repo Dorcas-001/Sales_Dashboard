@@ -48,6 +48,7 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Date'].dt.year == 2024]
+df0 = df0[df0['Start Date'].dt.year == 2024]
 
      # Calculate metrics
 scaling_factor = 1_000_000
@@ -95,7 +96,7 @@ st.markdown("""
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    .sidebar .sidebar-content h2 {
+    .sidebar .sidebar-content h3 {
         color: #007BFF; /* Change this color to your preferred title color */
         font-size: 1.5em;
         margin-bottom: 20px;
@@ -148,8 +149,7 @@ st.sidebar.header("Filters")
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 product = st.sidebar.multiselect("Select Product", options=df['Product'].unique())
-owner = st.sidebar.multiselect("Select Owner", options=df['Owner'].unique())
-channel_name = st.sidebar.multiselect("Select Intermediary Name", options=df['Intermediary name'].unique())
+owner = st.sidebar.multiselect("Select Sales Team", options=df['Owner'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 
@@ -163,8 +163,6 @@ if product:
     df = df[df['Product'].isin(product)]
 if owner:
     df = df[df['Owner'].isin(owner)]
-if channel_name:
-    df = df[df['Intermediary name'].isin(channel_name)]
 if client_name:
     df = df[df['Client Name'].isin(client_name)]
 
@@ -179,8 +177,6 @@ if product:
     filter_description += f"{', '.join(product)} "
 if owner:
     filter_description += f"{', '.join(owner)} "
-if channel_name:
-    filter_description += f"{', '.join(channel_name)} "
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
@@ -223,7 +219,7 @@ df = df[
 
 # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = df[df['Type'] == 'Endorsement']
-df_new = df[df['Product'] == 'New']
+df_new = df[df['Product'] == 'Health']
 df_renew = df[df['Product'] == 'Renewals']
 df_proactiv = df[df['Product'] == 'ProActiv']
 
@@ -301,9 +297,9 @@ if not df.empty:
     display_metric(col1, f"Target Premium ({filter_description.strip()})", value=f"RWF {total_target:.0f} M")
     display_metric(col2, "Variance", f"RWF {variance:.0f} M")
     display_metric(col3, f"Percentage Variance ({filter_description.strip()})", value=f"RWF {percent_var:.0f} %")
-    display_metric(col1, f"Total New Sales({filter_description.strip()})", value=f"RWF {total_new:.0f} M")
-    display_metric(col2, F"Total Renewal ({filter_description.strip()})", value=f"RWF {total_renew:.0f} M")
-    display_metric(col3, f"Total ProActiv Sales ({filter_description.strip()})", value=f"RWF {total_pro:.0f} M")
+    display_metric(col1, "Total New Sales", value=f"RWF {total_new:.0f} M")
+    display_metric(col2, "Total Renewals", value=f"RWF {total_renew:.0f} M")
+    display_metric(col3, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
 
 
    
@@ -316,7 +312,7 @@ if not df.empty:
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .sidebar .sidebar-content h2 {
+        .sidebar .sidebar-content h3 {
             color: #007BFF; /* Change this color to your preferred title color */
             font-size: 1.5em;
             margin-bottom: 20px;
@@ -402,7 +398,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Owner</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Sales Team</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
 
@@ -439,7 +435,7 @@ if not df.empty:
 
         fig_yearly_totals.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Owner",
+            xaxis_title="Product",
             yaxis_title="Total Values",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -449,7 +445,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Owner</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Product</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
  
@@ -464,155 +460,15 @@ if not df.empty:
         with st.expander("Target and premuim by Product"):
             st.dataframe(product_totals.style.format(precision=2))
 
-   # Create the layout columns
     cls1, cls2 = st.columns(2)
-# Count the occurrences of each Status
-    prod_counts = df["Owner"].value_counts().reset_index()
-    prod_counts.columns = ["Owner", "Count"]
-
-    with cls1:
-        # Display the header
-        st.markdown('<h3 class="custom-subheader">Number of Sales By Owners</h3>', unsafe_allow_html=True)
-
-        # Create a donut chart
-        fig = px.pie(prod_counts, names="Owner", values="Count", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
-
-# Count the occurrences of each Status
-    prod_counts = df["Channel"].value_counts().reset_index()
-    prod_counts.columns = ["Channel", "Count"]
-
-    with cls2:
-        # Display the header
-        st.markdown('<h3 class="custom-subheader">Number of Sales By Channel</h3>', unsafe_allow_html=True)
-
-        # Create a donut chart
-        fig = px.pie(prod_counts, names="Channel", values="Count", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
-
-
-
-
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Premium
-    monthly_product = df.groupby(['Start Month', 'Product'])['Total Premium'].sum().unstack().fillna(0)
-
-    # Create the layout columns
-    cls1, cls2 = st.columns(2)
-
-    with cls1:
-        fig_monthly_premium = go.Figure()
-
-        for idx, Client_Segment in enumerate(monthly_product.columns):
-            fig_monthly_premium.add_trace(go.Bar(
-                x=monthly_product.index,
-                y=monthly_product[Client_Segment],
-                name=Client_Segment,
-                textposition='inside',
-                textfont=dict(color='white'),
-                hoverinfo='x+y+name',
-                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-            ))
-
-
-        # Set layout for the Total Premium chart
-        fig_monthly_premium.update_layout(
-            barmode='group',  # Grouped bar chart
-            xaxis_title="Start Date",
-            yaxis_title="Total Premium",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50),
-        )
-
-        # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Monthly Sales Distribution by Product</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig_monthly_premium, use_container_width=True)
-
-
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Premium
-    monthly_premium = df.groupby(['Start Month', 'Owner'])['Total Premium'].sum().unstack().fillna(0)
-
-
-    with cls2:
-        fig_monthly_premium = go.Figure()
-
-        for idx, Client_Segment in enumerate(monthly_premium.columns):
-            fig_monthly_premium.add_trace(go.Bar(
-                x=monthly_premium.index,
-                y=monthly_premium[Client_Segment],
-                name=Client_Segment,
-                textposition='inside',
-                textfont=dict(color='white'),
-                hoverinfo='x+y+name',
-                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-            ))
-
-
-        # Set layout for the Total Premium chart
-        fig_monthly_premium.update_layout(
-            barmode='group',  # Grouped bar chart
-            xaxis_title="Start Date",
-            yaxis_title="Total Premium",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50),
-        )
-
-        # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Monthly Sales Distribution by Owner</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig_monthly_premium, use_container_width=True)
-
-    cl1, cl2 =st.columns(2)
-
-    with cl1:
-        with st.expander("Target and premuim by Owner"):
-            st.dataframe(monthly_product.style.format(precision=2))
-        
-    with cl2:
-        # Expander for IQR table
-        with st.expander("Target and premuim by Product"):
-            st.dataframe(monthly_premium.style.format(precision=2))
-
- # Calculate the Total Premium by Client Segment
-    int_premiums = df.groupby("Product")["Total Premium"].sum().reset_index()
-    int_premiums.columns = ["Product", "Total Premium"]    
-
-    # Create the layout columns
-    cls1, cls2 = st.columns(2)
-
-    with cls1:
-        # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Premium by Product</h3>', unsafe_allow_html=True)
-
-
-        # Create a donut chart
-        fig = px.pie(int_premiums, names="Product", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
 
  # Calculate the Total Premium by Client Segment
     int_owner = df.groupby("Owner")["Total Premium"].sum().reset_index()
     int_owner.columns = ["Owner", "Total Premium"]    
 
-    with cls2:
+    with cls1:
         # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Premium by Owner</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Premium by Sales Team</h3>', unsafe_allow_html=True)
 
 
         # Create a donut chart
@@ -623,142 +479,28 @@ if not df.empty:
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
+# Count the occurrences of each Status
+    prod_counts = df["Owner"].value_counts().reset_index()
+    prod_counts.columns = ["Owner", "Count"]
+
+    with cls2:
+        # Display the header
+        st.markdown('<h3 class="custom-subheader">Number of Sales By Sales Team</h3>', unsafe_allow_html=True)
+
+        # Create a donut chart
+        fig = px.pie(prod_counts, names="Owner", values="Count", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
     cl1, cl2 =st.columns(2)
 
     with cl1:
-        with st.expander("Target and premuim by Owner"):
-            st.dataframe(int_premiums.style.format(precision=2))
+        with st.expander("TotalPremium by Sales Team"):
+            st.dataframe(prod_counts.style.format(precision=2))
         
     with cl2:
-        with st.expander("Target and premuim by Product"):
+        with st.expander("Number of Sales by Sales Team"):
             st.dataframe(int_owner.style.format(precision=2))
 
-
-    colc1, colc2 = st.columns(2)
-    
-    # Function to format y-axis labels in millions
-    def millions(x, pos):
-        'The two args are the value and tick position'
-        return '%1.0fM' % (x * 1e-6)
-
-    # Group by day and Client Segment, then sum the Total Premium
-    area_chart_total_insured = df.groupby([df["Start Date"].dt.strftime("%Y-%m-%d"), 'Product'])['Total Premium'].sum().reset_index(name='Total Premium')
-
-    # Sort by the START DATE
-    area_chart_total_insured = area_chart_total_insured.sort_values("Start Date")
-
-
-    with colc1:
-        # Create the area chart for Total Premium
-        fig1, ax1 = plt.subplots()
-
-        # Pivot the DataFrame for easier plotting
-        pivot_df_insured = area_chart_total_insured.pivot(index='Start Date', columns='Product', values='Total Premium').fillna(0)
-        
-        # Plot the stacked area chart
-        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
-
-        # Remove the border around the chart
-        ax1.spines['top'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
-        ax1.spines['left'].set_visible(False)
-        ax1.spines['bottom'].set_visible(False)
-
-        # Set x-axis title
-        ax1.set_xlabel("Date", fontsize=9, color="gray")
-        plt.xticks(rotation=45, fontsize=9, color="gray")
-
-        # Set y-axis title
-        ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
-        plt.yticks(fontsize=9, color="gray")
-
-        # Format the y-axis
-        formatter = FuncFormatter(millions)
-        ax1.yaxis.set_major_formatter(formatter)
-
-        # Set chart title
-        st.markdown('<h2 class="custom-subheader">Total Premium by Product Over Time</h2>', unsafe_allow_html=True)
-
-        # Display the chart in Streamlit
-        st.pyplot(fig1)
-
-    # Group by day and Client Segment, then sum the Total Lives
-    area_chart_total_lives = df.groupby([df["Start Date"].dt.strftime("%Y-%m-%d"), 'Owner'])['Total Premium'].sum().reset_index(name='Total Premium')
-
-    # Sort by the START DATE
-    area_chart_total_lives = area_chart_total_lives.sort_values("Start Date")
-
-    with colc2:
-        # Create the area chart for Total Lives Covered
-        fig2, ax2 = plt.subplots()
-
-        # Pivot the DataFrame for easier plotting
-        pivot_df_lives = area_chart_total_lives.pivot(index='Start Date', columns='Owner', values='Total Premium').fillna(0)
-        
-        # Plot the stacked area chart
-        pivot_df_lives.plot(kind='area', stacked=True, ax=ax2, color=custom_colors[:len(pivot_df_lives.columns)])
-
-        # Remove the border around the chart
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-        ax2.spines['left'].set_visible(False)
-        ax2.spines['bottom'].set_visible(False)
-
-        # Set x-axis title
-        ax2.set_xlabel("Date", fontsize=9, color="gray")
-        plt.xticks(rotation=45, fontsize=9, color="gray")
-
-        # Set y-axis title
-        ax2.set_ylabel("Total Premium", fontsize=9, color="gray")
-        plt.yticks(fontsize=9, color="gray")
-
-        # Set chart title
-        st.markdown('<h2 class="custom-subheader">Total Sales by Owners Over Time</h2>', unsafe_allow_html=True)
-
-        # Display the chart in Streamlit
-        st.pyplot(fig2)
-
-    # Group by Client Name and Client Segment, then sum the Total Premium
-    df_grouped = df.groupby(['Client Name', 'Owner'])['Total Premium'].sum().reset_index()
-
-    # Get the top 10 clients by Total Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total Premium'].sum().reset_index()
-
-    # Filter the original DataFrame to include only the top 10 clients
-    client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
-    # Sort the client_df by Total Premium in descending order
-    client_df = client_df.sort_values(by='Total Premium', ascending=False)
-
-        # Create the bar chart
-    fig = go.Figure()
-
-
-            # Add bars for each Client Segment
-    for idx, Client_Segment in enumerate(client_df['Owner'].unique()):
-                Client_Segment_data = client_df[client_df['Owner'] == Client_Segment]
-                fig.add_trace(go.Bar(
-                    x=Client_Segment_data['Client Name'],
-                    y=Client_Segment_data['Total Premium'],
-                    name=Client_Segment,
-                    text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total Premium']],
-                    textposition='auto',
-                    marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-                ))
-
-    fig.update_layout(
-                barmode='stack',
-                yaxis_title="Total Premium",
-                xaxis_title="Client Name",
-                font=dict(color='Black'),
-                xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                margin=dict(l=0, r=0, t=30, b=50)
-            )
-
-            # Display the chart in Streamlit
-    st.markdown('<h2 class="custom-subheader">Client Premium by Owners</h2>', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
-
-  
-    with st.expander("Target and premuim by Owner"):
-            st.dataframe(client_df.style.format(precision=2))
