@@ -394,10 +394,10 @@ if not filtered_df.empty:
 
     display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
     display_metric(col2, "Total Endorsements", f"RWF {total_endorsement_premium:.0f} M")
-    display_metric(col3, "Average GWP per Client", f"RWF {gwp_average_scaled:.0f} M")
+    display_metric(col3, "Average GWP per Employer group", f"RWF {gwp_average_scaled:.0f} M")
 
-    display_metric(col1, "Lowest Premium per Client", f"RWF {lowest_premium:.0f} K")
-    display_metric(col2, "Highest Premium per Client", f"RWF {highest_premium:.0f} M",)
+    display_metric(col1, "Lowest Premium per Employer group", f"RWF {lowest_premium:.0f} K")
+    display_metric(col2, "Highest Premium per Employer group", f"RWF {highest_premium:.0f} M",)
 
     grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
