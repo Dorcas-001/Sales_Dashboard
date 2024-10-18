@@ -234,18 +234,41 @@ if not filter_description:
 
 
 
+df_whales= filtered_df[filtered_df['Client Segment'] == 'Whales']
+df_tigers = filtered_df[filtered_df['Client Segment'] == 'Tigers']
+df_elephants = filtered_df[filtered_df['Client Segment'] == 'Elephants']
+df_hares = filtered_df[filtered_df['Client Segment'] == 'Hares']
+
+df_whales_pro = df_whales[df_whales['Product_name'] == 'ProActiv']
+df_tigers_pro = df_tigers[df_tigers['Product_name'] == 'ProActiv']
+df_elephants_pro = df_elephants[df_elephants['Product_name'] == 'ProActiv']
+df_hares_pro = df_hares[df_hares['Product_name'] == 'ProActiv']
+
+df_whales_health = df_whales[df_whales['Product_name'] == 'Health']
+df_tigers_health  = df_tigers[df_tigers['Product_name'] == 'Health']
+df_elephants_health  = df_elephants[df_elephants['Product_name'] == 'Health']
+df_hares_health  = df_hares[df_hares['Product_name'] == 'Health']
+
 if not filtered_df.empty:
      # Calculate metrics
-    scaling_factor = 1_000_000  # For millions
-    scale = 1_000_000_000
+    scale = 1_000_000
     df_proactiv = df[df['Product_name'] == 'ProActiv']
     df_health = df[df['Product_name'] == 'Health']
 
     # Calculate the total premium for endorsements only
     # Assuming the column name for the premium is 'Total Premium'
 
+    total_whales_pro = (df_whales_pro['Total Premium'].sum())/scale
+    total_tigers_pro = (df_tigers_pro['Total Premium'].sum())/scale
+    total_elephants_pro = (df_elephants_pro['Total Premium'].sum())/scale
+    total_hares_pro = (df_hares_pro['Total Premium'].sum())/scale
 
-    total_pro = (df_proactiv['Total Premium'].sum())/scaling_factor
+    total_whales_health = (df_whales_health['Total Premium'].sum())/scale
+    total_tigers_health = (df_tigers_health['Total Premium'].sum())/scale
+    total_elephants_health = (df_elephants_health['Total Premium'].sum())/scale
+    total_hares_health = (df_hares_health['Total Premium'].sum())/scale
+
+    total_pro = (df_proactiv['Total Premium'].sum())/scale
     total_health = (df_health['Total Premium'].sum())/scale
 
 
@@ -257,9 +280,9 @@ if not filtered_df.empty:
 
 
     # Scale the sums
-    total_pre_scaled = total_pre / scaling_factor
-    total_in_pre_scaled = total_in_pre / scaling_factor
-    average_pre_scaled = average_premium_per_life/scaling_factor
+    total_pre_scaled = total_pre / scale
+    total_in_pre_scaled = total_in_pre / scale
+    average_pre_scaled = average_premium_per_life/scale
 
     # Create 4-column layout for metric cards
     col1, col2, col3 = st.columns(3)
@@ -306,15 +329,30 @@ if not filtered_df.empty:
             """, unsafe_allow_html=True)
         
 
+    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+
     # Display metrics
     display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col2, "Total Lives", total_lives)
-    display_metric(col3, "Total Principal Members", total_pm)  
-    display_metric(col3, "Total Health Premium", f"RWF {total_health:.0f} B")
-    display_metric(col2, "Total ProActiv Premium", f"RWF {total_pro:.0f} M")
-    display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.1f}M")
+    display_metric(col2, "Total Health Premium", f"RWF {total_health:.0f} M")
+    display_metric(col3, "Total ProActiv Premium", f"RWF {total_pro:.0f} M")
+
+    st.markdown('<h3 class="custom-subheader">For Health Insurance Premium by Client Segment</h3>', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+
+    display_metric(col1, "Total Health Whales Premium", value=f"RWF {total_whales_health:.0f} M")
+    display_metric(col2, "Total Health Elephants Premium", value=f"RWF {total_elephants_health:.0f} M")
+    display_metric(col3, "Total Health Tigers Premium", value=f"RWF {total_tigers_health:.0f} M")
+    display_metric(col4, "Total Health Hares Premium", value=f"RWF {total_hares_health:.0f} M")
 
 
+    st.markdown('<h3 class="custom-subheader">For ProActiv Premium by Client Segment</h3>', unsafe_allow_html=True)
+    col1, col2, col3, col4 = st.columns(4)
+
+    display_metric(col1, "Total ProActiv Whales Premium", value=f"RWF {total_whales_pro:.0f} M")
+    display_metric(col2, "Total ProActiv Elephants Premium", value=f"RWF {total_elephants_pro:.0f} M")
+    display_metric(col3, "Total ProActiv Tigers Premium", value=f"RWF {total_tigers_pro:.0f} M")
+    display_metric(col4, "Total ProActiv Hares Premium", value=f"RWF {total_hares_pro:.0f} M")
 
    
     # Sidebar styling and logo
@@ -545,13 +583,17 @@ if not filtered_df.empty:
 
     cls1, cls2 = st.columns(2)
 
-    # Group data by "Start Month Month" and "Client Segment" and sum the Total Premium
+    # Group data by "Start Month" and "Channel" and sum the Total Premium
     monthly_premium = filtered_df.groupby(['Start Month', 'Client Segment'])['Total Premium'].sum().unstack().fillna(0)
 
-    # Group data by "Start Month Month" and "Client Segment" and sum the Total Lives
+    # Group data by "Start Month" to count the number of sales
+    monthly_sales_count = filtered_df.groupby(['Start Month']).size()
+
+    # Group by Start Date Month and Intermediary and sum the Total lives
     monthly_lives = filtered_df.groupby(['Start Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
-
+    # Define custom colors
+    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
     # Create the layout columns
     cls1, cls2 = st.columns(2)
@@ -570,12 +612,13 @@ if not filtered_df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-        # Add a line chart to show the trend of Total Premium over time
+        # Add a secondary y-axis for the count of sales
         fig_monthly_premium.add_trace(go.Scatter(
-            x=monthly_premium.index,
-            y=monthly_premium.sum(axis=1),
+            x=monthly_sales_count.index,
+            y=monthly_sales_count,
             mode='lines+markers',
-            name='Rate of change',
+            name='Number of Sales',
+            yaxis='y2',
             line=dict(color='red', width=2),
             marker=dict(size=6, symbol='circle', color='red')
         ))
@@ -585,6 +628,11 @@ if not filtered_df.empty:
             barmode='group',  # Grouped bar chart
             xaxis_title="Month",
             yaxis_title="Total Premium",
+            yaxis2=dict(
+                title="Number of Sales",
+                overlaying='y',
+                side='right'
+            ),
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -609,12 +657,13 @@ if not filtered_df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-        # Add a line chart to show the trend of total lives covered over time
+        # Add a secondary y-axis for the count of sales
         fig_monthly_lives.add_trace(go.Scatter(
-            x=monthly_lives.index,
-            y=monthly_lives.sum(axis=1),
+            x=monthly_sales_count.index,
+            y=monthly_sales_count,
             mode='lines+markers',
-            name='Rate of change',
+            name='Number of Sales',
+            yaxis='y2',
             line=dict(color='red', width=2),
             marker=dict(size=6, symbol='circle', color='red')
         ))
@@ -624,6 +673,11 @@ if not filtered_df.empty:
             barmode='group',  # Grouped bar chart
             xaxis_title="Start Month",
             yaxis_title="Total Lives Covered",
+            yaxis2=dict(
+                title="Number of Sales",
+                overlaying='y',
+                side='right'
+            ),
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),

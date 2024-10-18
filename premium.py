@@ -46,6 +46,8 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
+df0['Start Date'] = pd.to_datetime(df0['Start Date'], errors='coerce')
+
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Date'].dt.year == 2024]
 df0 = df0[df0['Start Date'].dt.year == 2024]
@@ -472,12 +474,12 @@ if not df.empty:
 
 
         # Create a donut chart
-        fig = px.pie(int_owner, names="Owner", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+        fig_owner = px.pie(int_owner, names="Owner", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig_owner.update_traces(textposition='inside', textinfo='value+percent')
+        fig_owner.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
 
         # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_owner, use_container_width=True)
 
 # Count the occurrences of each Status
     prod_counts = df["Owner"].value_counts().reset_index()

@@ -224,7 +224,8 @@ if client_name:
 if not filter_description:
     filter_description = "All df"
 
-
+df_proactiv = df[df['Product_name'] == 'ProActiv']
+df_health = df[df['Product_name'] == 'Health']
 
 if not filtered_df.empty:  
 
@@ -290,6 +291,10 @@ if not filtered_df.empty:
 
     dependency_ratio = total_dependents / total_mem
 
+    total_health_pm = (df_health['No. of staffs'].sum())
+    total_pro_dep = (df_proactiv['Dependents'].sum())
+    total_pro_pm = (df_proactiv['No. of staffs'].sum())
+    total_health_dep = (df_health['Dependents'].sum())
 
 
     # Scale the sums
@@ -306,6 +311,8 @@ if not filtered_df.empty:
     Q1 = (grouped['Median lives'].quantile(0.25))
     Q3 = (grouped['Median lives'].quantile(0.75))
     IQR = Q3 - Q1
+    st.markdown('<h3 class="custom-subheader">Overall</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
 
     display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col2, "Total Lives", total_lives)
@@ -314,7 +321,17 @@ if not filtered_df.empty:
     display_metric(col2, "Premium Per Principal Member", f"RWF {average_pre_scaled:.1f} M")
     display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
 
+    st.markdown('<h3 class="custom-subheader">For Health Insurance Lives Covered</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
 
+    display_metric(col1, "Total Health Principal Members", value=f"RWF {total_health_pm:.0f} M")
+    display_metric(col2, "Total Health Dependents", value=f"RWF {total_health_dep:.0f} M")
+
+    st.markdown('<h3 class="custom-subheader">For ProActiv Lives Covered</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+
+    display_metric(col1, "Total ProActiv Principal Members", value=f"RWF {total_pro_pm:.0f} M")
+    display_metric(col2, "Total ProActiv Dependents", value=f"RWF {total_pro_dep:.0f} M")
 
 
     

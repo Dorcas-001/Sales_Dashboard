@@ -26,7 +26,7 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">CLOSED SALES VIEW</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">PRODUCT VIEW</h1>', unsafe_allow_html=True)
 
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
@@ -233,8 +233,7 @@ if not df.empty:
     total_health = (df_health['Total Premium'].sum())/scale
 
 
-    # Create 4-column layout for metric cards
-    col1, col2, col3 = st.columns(3)
+
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -276,20 +275,30 @@ if not df.empty:
                 <div class="metric-value">{value}</div>
             </div>
             """, unsafe_allow_html=True)
+    
+    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
 
+    # Create 4-column layout for metric cards
+    col1, col2, col3, col4 = st.columns(4)
 
     # Display metrics
     display_metric(col1, f"Total Premium ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
     display_metric(col2, "Total Endorsement", f"RWF {total_endorsement_premium:.0f} M")
     display_metric(col3, "Total Health Sales", value=f"RWF {total_health:.0f} M")
-    display_metric(col1, "Total New Sales", value=f"RWF {total_new:.0f} M")
-    display_metric(col2, "Total Renewals", value=f"RWF {total_renew:.0f} M")
-    display_metric(col3, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col4, "Total New Sales", value=f"RWF {total_new:.0f} M")
 
-    display_metric(col1, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
-    display_metric(col2, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
-    display_metric(col3, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
-    display_metric(col1, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
+    st.markdown('<h3 class="custom-subheader">For Health Insurance</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+
+    display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
+    display_metric(col2, "Total New Health Premium", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
+
+    st.markdown('<h3 class="custom-subheader">For ProActiv</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col2, "Total New ProActiv Premium", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
 
    
     # Sidebar styling and logo
@@ -396,7 +405,7 @@ if not df.empty:
 
 
     # Group data by "Start Month Year" and "Client Segment" and calculate the average Total Premium
-    yearly_avg_premium = df.groupby(['Start Year', 'Product_name'])['Average Premium'].mean().unstack().fillna(0)
+    yearly_avg_premium = df.groupby(['Start Year', 'Product_name'])['Total Premium'].mean().unstack().fillna(0)
 
     # Define custom colors
 
@@ -427,7 +436,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Product</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Product per Employer Group</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
@@ -442,78 +451,16 @@ if not df.empty:
                     st.dataframe(yearly_avg_premium.style.format(precision=2))
 
 
-    # Group data by "Cover Type" and "Product_name" and sum the Total Premium
-    cover_product_premium = df.groupby(['Cover Type', 'Product_name'])['Total Premium'].sum().unstack().fillna(0)
+
 
     # Create the layout columns
-    cls1, cls2 = st.columns(2)
-
-    with cls2:
-        fig_cover_product_premium = go.Figure()
-
-
-        for idx, product_name in enumerate(cover_product_premium.columns):
-            fig_cover_product_premium.add_trace(go.Bar(
-                x=cover_product_premium.index,
-                y=cover_product_premium[product_name],
-                name=product_name,
-                textposition='inside',
-                textfont=dict(color='white'),
-                hoverinfo='x+y+name',
-                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-            ))
-
-        # Set layout for the Total Premium chart
-        fig_cover_product_premium.update_layout(
-            barmode='group',  # Grouped bar chart
-            xaxis_title="Cover Type",
-            yaxis_title="Total Premium",
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50),
-        )
-
-        # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Premium Distribution by Cover Type and Product</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig_cover_product_premium, use_container_width=True)
-
-
-
- # Calculate the Total Premium by Client Segment
-    int_owner = df.groupby("Product_name")["Total Premium"].sum().reset_index()
-    int_owner.columns = ["Product", "Total Premium"]    
-
-    with cls1:
-        # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Premium by Product</h3>', unsafe_allow_html=True)
-
-
-        # Create a donut chart
-        fig = px.pie(int_owner, names="Product", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
-    cl1, cl2 =st.columns(2)
-
-    with cl2:  
-            with st.expander("Premium by cover type and product"):
-                    st.dataframe(cover_product_premium.style.format(precision=2))
-    with cl1:  
-            with st.expander("Total Product Premium"):
-                    st.dataframe(int_owner.style.format(precision=2))
-
-
     cls1, cls2 = st.columns(2)
 
     # Group data by "Start Date Month" and "Intermediary" and sum the Total Premium
     monthly_premium = df.groupby(['Start Month', 'Product_name'])['Total Premium'].sum().unstack().fillna(0)
 
 
-    with cls1:
+    with cls2:
         # Define custom colors
         custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
@@ -547,9 +494,135 @@ if not df.empty:
         st.markdown('<h3 class="custom-subheader">Monthly Premium Distribution by Product</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
-    clm1, clm2 = st.columns(2)
 
-    with clm1:
+
+ # Calculate the Total Premium by Client Segment
+    int_owner = df.groupby("Product_name")["Total Premium"].sum().reset_index()
+    int_owner.columns = ["Product", "Total Premium"]    
+
+    with cls1:
+        # Display the header
+        st.markdown('<h3 class="custom-subheader">Total Premium by Product</h3>', unsafe_allow_html=True)
+
+
+        # Create a donut chart
+        fig = px.pie(int_owner, names="Product", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+    cl1, cl2 =st.columns(2)
+
+
+    with cl1:  
+            with st.expander("Total Product Premium"):
+                    st.dataframe(int_owner.style.format(precision=2))
+
+    with cl2:
         # Create an expandable section for the table
         with st.expander("View Monthly Total Premium by Product"):
             st.dataframe(monthly_premium.style.format(precision=2))
+
+
+    # Group data by "Intermediary name" and sum the Total Premium
+    premium_by_intermediary = df_health.groupby('Cover Type')['Total Premium'].sum().reset_index()
+
+    # Calculate the number of sales by "Intermediary name"
+    sales_by_cover = df_health.groupby('Cover Type').size().reset_index(name='Number of Sales')
+
+    # Merge the premium and sales data
+    merged_df = premium_by_intermediary.merge(sales_by_cover, on='Cover Type')
+
+   # Create the layout columns
+    cls1, cls2 = st.columns(2)
+
+    with cls1:
+        fig_premium_by_intermediary = go.Figure()
+
+        # Add bar trace for Total Premium
+        fig_premium_by_intermediary.add_trace(go.Bar(
+            x=merged_df['Cover Type'],
+            y=merged_df['Total Premium'],
+            text=merged_df['Total Premium'],
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y',
+            marker_color='#009DAE',
+            name='Total Premium'
+        ))
+
+
+        # Set layout for the chart
+        fig_premium_by_intermediary.update_layout(
+            xaxis_title="Cover Type",
+            yaxis=dict(
+                title="Total Premium",
+                titlefont=dict(color="#009DAE"),
+                tickfont=dict(color="#009DAE")
+            ),
+
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h3 class="custom-subheader">Total Health Premium by Cover Type</h3>', unsafe_allow_html=True)
+        st.plotly_chart(fig_premium_by_intermediary, use_container_width=True)
+
+
+    # Group data by "Intermediary name" and sum the Total Premium
+    premium_by_intermediary = df_proactiv.groupby('Cover Type')['Total Premium'].sum().reset_index()
+
+    # Calculate the number of sales by "Intermediary name"
+    sales_by_intermediary = df_proactiv.groupby('Cover Type').size().reset_index(name='Number of Sales')
+
+    # Merge the premium and sales data
+    merged_data = premium_by_intermediary.merge(sales_by_intermediary, on='Cover Type')
+
+
+    with cls2:
+        fig_premium_by_intermediary = go.Figure()
+
+        # Add bar trace for Total Premium
+        fig_premium_by_intermediary.add_trace(go.Bar(
+            x=merged_data['Cover Type'],
+            y=merged_data['Total Premium'],
+            text=merged_data['Total Premium'],
+            textposition='inside',
+            textfont=dict(color='white'),
+            hoverinfo='x+y',
+            marker_color='#009DAE',
+            name='Total Premium'
+        ))
+
+
+        # Set layout for the chart
+        fig_premium_by_intermediary.update_layout(
+            xaxis_title="Cover Type",
+            yaxis=dict(
+                title="Total Premium",
+                titlefont=dict(color="#009DAE"),
+                tickfont=dict(color="#009DAE")
+            ),
+
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+        )
+
+        # Display the chart in Streamlit
+        st.markdown('<h3 class="custom-subheader">Total ProActiv Premium by Cover Type</h3>', unsafe_allow_html=True)
+        st.plotly_chart(fig_premium_by_intermediary, use_container_width=True)
+
+    cl1, cl2 =st.columns(2)
+
+    with cl1:
+        with st.expander("Total Health sales by cover type"):
+            st.dataframe(merged_df.style.format(precision=2))
+        
+    with cl2:  
+            with st.expander("Total ProActiv sales by cover type"):
+                    st.dataframe(merged_data.style.format(precision=2))

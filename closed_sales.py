@@ -203,6 +203,11 @@ df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
 
+df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']
+df_proactiv_renew = df_proactiv[df_proactiv['Cover Type'] == 'Renew/Insured']
+
+df_health_new = df_health[df_health['Cover Type'] == 'New Insured']
+df_health_renew = df_health[df_health['Cover Type'] == 'Renew/Insured']
 # Calculate the total premium for endorsements only
 # Assuming the column name for the premium is 'Total Premium'
 if not df.empty:
@@ -221,8 +226,13 @@ if not df.empty:
     total_pro = (df_proactiv['Total Premium'].sum())/scale
     total_health = (df_health['Total Premium'].sum())/scale
 
+    # Calculate total premiums for specific combinations
+    total_proactiv_new = (df_proactiv_new['Total Premium'].sum()) / scale
+    total_proactiv_renew = (df_proactiv_renew['Total Premium'].sum()) / scale
+    total_health_new = (df_health_new['Total Premium'].sum()) / scale
+    total_health_renew = (df_health_renew['Total Premium'].sum()) / scale
+
     # Create 4-column layout for metric cards
-    col1, col2, col3 = st.columns(3)
 
     # Define CSS for the styled boxes
     st.markdown("""
@@ -265,17 +275,29 @@ if not df.empty:
             </div>
             """, unsafe_allow_html=True)
 
+    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
+
+    col1, col2, col3, col4 = st.columns(4)
 
     # Display metrics
     display_metric(col1, f"Total Premium ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
     display_metric(col2, "Total Endorsement", f"RWF {total_endorsement_premium:.0f} M")
-    display_metric(col3, "Total Health Sales", value=f"RWF {total_health:.0f} M")
-    display_metric(col1, "Total New Sales", value=f"RWF {total_new:.0f} M")
-    display_metric(col2, "Total Renewals", value=f"RWF {total_renew:.0f} M")
-    display_metric(col3, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col3, "Total New Sales", value=f"RWF {total_new:.0f} M")
+    display_metric(col4, "Total Renewals", value=f"RWF {total_renew:.0f} M")
+    
+    st.markdown('<h3 class="custom-subheader">For Health Insurance</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
 
+    display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
+    display_metric(col2, "Total New Health Premium", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
 
-   
+    st.markdown('<h3 class="custom-subheader">For ProActiv</h3>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col2, "Total New ProActiv Premium", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
+
     # Sidebar styling and logo
     st.markdown("""
         <style>
@@ -377,7 +399,7 @@ if not df.empty:
 
 
     # Group data by "Start Month Year" and "Client Segment" and calculate the average Total Premium
-    yearly_avg_premium = df.groupby(['Start Year', 'Product_name'])['Average Premium'].mean().unstack().fillna(0)
+    yearly_avg_premium = df.groupby(['Start Year', 'Product_name'])['Total Premium'].mean().unstack().fillna(0)
 
     # Define custom colors
 
@@ -408,7 +430,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Product</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Product per Employer Group</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
