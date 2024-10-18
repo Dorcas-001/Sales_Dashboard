@@ -383,7 +383,7 @@ if not filtered_df.empty:
             """, unsafe_allow_html=True)
 
 
-    st.markdown('<h3 class="custom-subheader">For Health Insurrance Gross Written Premium or ProActiv Premium</h3>', unsafe_allow_html=True)    
+    st.markdown('<h3 class="custom-subheader">For Health Insurance Gross Written Premium or ProActiv Premium</h3>', unsafe_allow_html=True)    
 
 
     # Display metrics
@@ -412,7 +412,7 @@ if not filtered_df.empty:
     display_metric(cols4, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
 
 
-    st.markdown('<h2 class="custom-subheader">For Health Insurrance</h2>', unsafe_allow_html=True) 
+    st.markdown('<h2 class="custom-subheader">For Health Insurance</h2>', unsafe_allow_html=True) 
     col1, col2, col3 = st.columns(3)
     display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
     display_metric(col2, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
@@ -430,7 +430,6 @@ if not filtered_df.empty:
 
     display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
     display_metric(col2, "YTD Health Target Sales", f"RWF {total_health_target:.0f} M")
-    display_metric(col3, "Total Health Sales", f"RWF {total_health:.0f} M")
     display_metric(col1, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
     display_metric(col2, "Variance", f"RWF {health_variance:.1f} M")
     display_metric(col3, "Percentage Variance", value=f"RWF {health_percent_var:.2f} %")
@@ -440,20 +439,18 @@ if not filtered_df.empty:
 
     display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
     display_metric(col2, "YTD ProActiv Target Sales", f"RWF {total_pro_target:.0f} M")
-    display_metric(col3, "Total Health Sales", f"RWF {total_pro:.0f} M")
-    display_metric(col1, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
-    display_metric(col2, "Variance", f"RWF {pro_variance:.0f} M")
-    display_metric(col3, "Percentage Variance", value=f"RWF {pro_percent_var:.0f} %")
+    display_metric(col2, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
+    display_metric(col1, "Variance", f"RWF {pro_variance:.0f} M")
+    display_metric(col2, "Percentage Variance", value=f"RWF {pro_percent_var:.0f} %")
 
     st.markdown('<h2 class="custom-subheader">For Renewals Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
     display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
     display_metric(col2, "YTD Renewal Target Premium", f"RWF {total_renewals:.0f} M")
-    display_metric(col3, "Total Renewals", f"RWF {total_renew:.0f} M")
-    display_metric(col1, "YTD Renewals", f"RWF {total_renew_2024:.0f} M")
-    display_metric(col2, "Variance", f"RWF {renew_variance:.0f} M")
-    display_metric(col3, "Percentage Variance", value=f"RWF {renew_percent_var:.0f} %")
+    display_metric(col3, "YTD Actual Renewals", f"RWF {total_renew_2024:.0f} M")
+    display_metric(col1, "Variance", f"RWF {renew_variance:.0f} M")
+    display_metric(col2, "Percentage Variance", value=f"RWF {renew_percent_var:.0f} %")
 
 
 
