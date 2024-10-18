@@ -140,7 +140,7 @@ st.markdown("""
 
 
 # Ensure the 'Start Date' column is in datetime format if needed
-df["START DATE"] = pd.to_datetime(df["Start Date"], errors='coerce')
+df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
 
 
