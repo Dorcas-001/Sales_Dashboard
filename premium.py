@@ -159,7 +159,6 @@ month_order = {
 sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_order[x])
 # Sidebar for filters
 st.sidebar.header("Filters")
-year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Year'].dropna().unique()))
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 product = st.sidebar.multiselect("Select Product", options=df['Product'].unique())
