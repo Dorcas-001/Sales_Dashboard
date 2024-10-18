@@ -26,14 +26,24 @@ st.markdown('''
     </style>
 ''', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">Eden Care Sales Team  View</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">CLOSED SALES VIEW</h1>', unsafe_allow_html=True)
 
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
-
+sheet_name1 ="ENDORSMENTS"
 # Read all sheets into a dictionary of DataFrames
-df = pd.read_excel(filepath, sheet_name=sheet_name)
+df0 = pd.read_excel(filepath, sheet_name=sheet_name)
+df1=pd.read_excel(filepath, sheet_name=sheet_name1)
 
+
+
+
+# Ensure the 'Start Date' column is in datetime format
+df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
+# Filter rows where the Start Date is in 2024
+
+
+df = pd.concat([df0, df1])
 
 
 # Ensure the 'Start Date' column is in datetime format if needed
@@ -88,8 +98,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-eden_care_df = df[df['Intermediary company'] == 'Eden Care']
-
 
 
 month_order = {
@@ -104,8 +112,10 @@ st.sidebar.header("Filters")
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 product = st.sidebar.multiselect("Select Product", options=df['Product_name'].unique())
+channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
-owner = st.sidebar.multiselect("Select Sales Person", options=eden_care_df['Intermediary name'].unique())
+owner = st.sidebar.multiselect("Select Sales Team", options=df['Owner'].unique())
+channel_name = st.sidebar.multiselect("Select Intermediary Name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
 
@@ -115,12 +125,14 @@ if month:
     df = df[df['Start Month'].isin(month)]
 if cover:
     df = df[df['Cover Type'].isin(cover)]
+if channel:
+    df = df[df['Channel'].isin(channel)]
 if product:
-    df = df[df['Product_name'].isin(product)]
-if segment:
-    df = df[df['Client Segment'].isin(segment)]
+    df = df[df['Product'].isin(product)]
 if owner:
     df = df[df['Owner'].isin(owner)]
+if channel_name:
+    df = df[df['Intermediary name'].isin(channel_name)]
 if client_name:
     df = df[df['Client Name'].isin(client_name)]
 
@@ -131,10 +143,14 @@ if month:
     filter_description += f"{', '.join(map(str, month))} "
 if cover:
     filter_description += f"{', '.join(map(str, cover))} "
+if channel:
+    filter_description += f"{', '.join(channel)} "
 if product:
     filter_description += f"{', '.join(product)} "
 if owner:
     filter_description += f"{', '.join(owner)} "
+if channel_name:
+    filter_description += f"{', '.join(channel_name)} "
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
@@ -176,26 +192,41 @@ df = df[
 ]
 
 # Filter the concatenated DataFrame to include only endorsements
+df_endorsements_only = df[(df['Type'] == 'Endorsement') & (df['Product_name'] == 'Health')]
+# Filter the concatenated DataFrame to include only endorsements
 df_new = df[df['Cover Type'] == 'New Insured']
 df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
 
+# Further filter by Cover Type within each product
+df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']
+df_proactiv_renew = df_proactiv[df_proactiv['Cover Type'] == 'Renew/Insured']
+
+df_health_new = df_health[df_health['Cover Type'] == 'New Insured']
+df_health_renew = df_health[df_health['Cover Type'] == 'Renew/Insured']
+
+
 # Calculate the total premium for endorsements only
 # Assuming the column name for the premium is 'Total Premium'
-
 if not df.empty:
      # Calculate metrics
     scale=1_000_000  # For millions
 
+
+    # Calculate total premiums for specific combinations
+    total_proactiv_new = (df_proactiv_new['Total Premium'].sum()) / scale
+    total_proactiv_renew = (df_proactiv_renew['Total Premium'].sum()) / scale
+    total_health_new = (df_health_new['Total Premium'].sum()) / scale
+    total_health_renew = (df_health_renew['Total Premium'].sum()) / scale
+
     total_pre = df["Total Premium"].sum()
     total_in_pre = df["Total Premium"].sum()
-    total_lives=df["Total lives"].sum()
     # Scale the sums
     total_pre_scaled = total_pre / scale
     total_in_pre_scaled = total_in_pre / scale
 
-
+    total_endorsement_premium = (df_endorsements_only['Total Premium'].sum())/scale
     total_new = (df_new['Total Premium'].sum())/scale
     total_renew = (df_renew['Total Premium'].sum())/scale
     total_pro = (df_proactiv['Total Premium'].sum())/scale
@@ -249,14 +280,16 @@ if not df.empty:
 
     # Display metrics
     display_metric(col1, f"Total Premium ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
-    display_metric(col2, "Total Health Sales", f"RWF {total_health:.0f} M")
-    display_metric(col3, f"Total ProActiv Sales ({filter_description.strip()})", value=f"RWF {total_pro:.0f} M")
-    display_metric(col1, f"Total New Sales({filter_description.strip()})", value=f"RWF {total_new:.0f} M")
-    display_metric(col2, F"Total Renewals ({filter_description.strip()})", value=f"RWF {total_renew:.0f} M")
-    display_metric(col3, "Total Lives Covered", f"{total_lives:.0f} ")
+    display_metric(col2, "Total Endorsement", f"RWF {total_endorsement_premium:.0f} M")
+    display_metric(col3, "Total Health Sales", value=f"RWF {total_health:.0f} M")
+    display_metric(col1, "Total New Sales", value=f"RWF {total_new:.0f} M")
+    display_metric(col2, "Total Renewals", value=f"RWF {total_renew:.0f} M")
+    display_metric(col3, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
 
-
-
+    display_metric(col1, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col2, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
+    display_metric(col3, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col1, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
 
    
     # Sidebar styling and logo
@@ -305,139 +338,76 @@ if not df.empty:
                 
         </style>
         """, unsafe_allow_html=True)
+
     
     custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
 
-    
-    colc1, colc2 = st.columns(2)
-    # Filter data for "Eden Care" intermediaries
-    eden_care_df = df[df['Intermediary company'] == 'Eden Care']
- 
+    cols1, cols2 = st.columns(2)
 
-    # Group by day and Client Segment, then sum the Total Lives
-    area_chart_total_lives = eden_care_df.groupby([eden_care_df["Start Date"].dt.strftime("%Y-%m-%d"), 'Intermediary name'])['Total Premium'].sum().reset_index(name='Total Premium')
+    custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
+
+
+    
+    # Function to format y-axis labels in millions
+    def millions(x, pos):
+        'The two args are the value and tick position'
+        return '%1.0fM' % (x * 1e-6)
+
+    # Group by day and Client Segment, then sum the Total Premium
+    area_chart_total_insured = df.groupby([df["Start Date"].dt.strftime("%Y-%m-%d"), 'Product_name'])['Total Premium'].sum().reset_index(name='Total Premium')
 
     # Sort by the START DATE
-    area_chart_total_lives = area_chart_total_lives.sort_values("Start Date")
+    area_chart_total_insured = area_chart_total_insured.sort_values("Start Date")
 
-    with colc1:
-        # Create the area chart for Total Lives Covered
-        fig2, ax2 = plt.subplots()
+
+    with cols1:
+        # Create the area chart for Total Premium
+        fig1, ax1 = plt.subplots()
 
         # Pivot the DataFrame for easier plotting
-        pivot_df_lives = area_chart_total_lives.pivot(index='Start Date', columns='Intermediary name', values='Total Premium').fillna(0)
+        pivot_df_insured = area_chart_total_insured.pivot(index='Start Date', columns='Product_name', values='Total Premium').fillna(0)
         
         # Plot the stacked area chart
-        pivot_df_lives.plot(kind='area', stacked=True, ax=ax2, color=custom_colors[:len(pivot_df_lives.columns)])
+        pivot_df_insured.plot(kind='area', stacked=True, ax=ax1, color=custom_colors[:len(pivot_df_insured.columns)])
 
         # Remove the border around the chart
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-        ax2.spines['left'].set_visible(False)
-        ax2.spines['bottom'].set_visible(False)
+        ax1.spines['top'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+        ax1.spines['left'].set_visible(False)
+        ax1.spines['bottom'].set_visible(False)
 
         # Set x-axis title
-        ax2.set_xlabel("Date", fontsize=9, color="gray")
+        ax1.set_xlabel("Date", fontsize=9, color="gray")
         plt.xticks(rotation=45, fontsize=9, color="gray")
 
         # Set y-axis title
-        ax2.set_ylabel("Total Premium", fontsize=9, color="gray")
+        ax1.set_ylabel("Total Premium", fontsize=9, color="gray")
         plt.yticks(fontsize=9, color="gray")
 
+        # Format the y-axis
+        formatter = FuncFormatter(millions)
+        ax1.yaxis.set_major_formatter(formatter)
+
         # Set chart title
-        st.markdown('<h3 class="custom-subheader">Total Sales by Sales Team Over Time</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Premium by Product Over Time</h3>', unsafe_allow_html=True)
 
         # Display the chart in Streamlit
-        st.pyplot(fig2)
+        st.pyplot(fig1)
 
 
-    # Group data by "Intermediary name" and sum the Total Premium
-    premium_by_intermediary = eden_care_df.groupby('Intermediary name')['Total Premium'].sum().reset_index()
+    # Group data by "Start Month Year" and "Client Segment" and calculate the average Total Premium
+    yearly_avg_premium = df.groupby(['Start Year', 'Product_name'])['Average Premium'].mean().unstack().fillna(0)
 
-    # Calculate the number of sales by "Intermediary name"
-    sales_by_intermediary = eden_care_df.groupby('Intermediary name').size().reset_index(name='Number of Sales')
+    # Define custom colors
 
-    # Merge the premium and sales data
-    merged_data = premium_by_intermediary.merge(sales_by_intermediary, on='Intermediary name')
+    with cols2:
+        # Create the grouped bar chart
+        fig_yearly_avg_premium = go.Figure()
 
-
-
-    with colc2:
-        fig_premium_by_intermediary = go.Figure()
-
-        # Add bar trace for Total Premium
-        fig_premium_by_intermediary.add_trace(go.Bar(
-            x=merged_data['Intermediary name'],
-            y=merged_data['Total Premium'],
-            text=merged_data['Total Premium'],
-            textposition='inside',
-            textfont=dict(color='white'),
-            hoverinfo='x+y',
-            marker_color='#009DAE',
-            name='Total Premium'
-        ))
-
-        # Add scatter trace for Number of Sales on secondary y-axis
-        fig_premium_by_intermediary.add_trace(go.Scatter(
-            x=merged_data['Intermediary name'],
-            y=merged_data['Number of Sales'],
-            mode='lines+markers',
-            name='Number of Sales',
-            yaxis='y2',
-            marker=dict(color='red', size=10),
-            line=dict(color='red', width=2)
-        ))
-
-        # Set layout for the chart
-        fig_premium_by_intermediary.update_layout(
-            xaxis_title="Intermediary Name",
-            yaxis=dict(
-                title="Total Premium",
-                titlefont=dict(color="#009DAE"),
-                tickfont=dict(color="#009DAE")
-            ),
-            yaxis2=dict(
-                title="Number of Sales",
-                titlefont=dict(color="red"),
-                tickfont=dict(color="red"),
-                anchor="x",
-                overlaying="y",
-                side="right"
-            ),
-            font=dict(color='Black'),
-            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-            margin=dict(l=0, r=0, t=30, b=50),
-        )
-
-        # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Premium and Number of Sales by Sales Team</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig_premium_by_intermediary, use_container_width=True)
-
-
-
-    cl1, cl2 =st.columns(2)
-
-    with cl2:
-        with st.expander("Premium for Sales Team"):
-            st.dataframe(sales_by_intermediary.style.format(precision=2))
-        
-    with cl1:  
-            with st.expander("Total Premium by Sales Team over Time"):
-                    st.dataframe(area_chart_total_lives.style.format(precision=2))
-
-
-
-    # Group data by "Start Date Month" and "Client Segment" and sum the Total Premium
-    monthly_premium = eden_care_df.groupby(['Start Month', 'Intermediary name'])['Total Premium'].sum().unstack().fillna(0)
-
-
-
-    fig_monthly_premium = go.Figure()
-
-    for idx, Client_Segment in enumerate(monthly_premium.columns):
-            fig_monthly_premium.add_trace(go.Bar(
-                x=monthly_premium.index,
-                y=monthly_premium[Client_Segment],
+        for idx, Client_Segment in enumerate(yearly_avg_premium.columns):
+            fig_yearly_avg_premium.add_trace(go.Bar(
+                x=yearly_avg_premium.index,
+                y=yearly_avg_premium[Client_Segment],
                 name=Client_Segment,
                 textposition='inside',
                 textfont=dict(color='white'),
@@ -445,45 +415,48 @@ if not df.empty:
                 marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
             ))
 
-
-        # Set layout for the Total Premium chart
-    fig_monthly_premium.update_layout(
+        fig_yearly_avg_premium.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Month",
-            yaxis_title="Total Premium",
+            xaxis_title="Start Year",
+            yaxis_title="Average Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
             margin=dict(l=0, r=0, t=30, b=50),
+            height= 450
         )
 
-        # Display the Total Premium chart in Streamlit
-    st.markdown('<h3 class="custom-subheader">Monthly Sales Distribution by Sales Team</h3>', unsafe_allow_html=True)
-    st.plotly_chart(fig_monthly_premium, use_container_width=True)
+        # Display the chart in Streamlit
+        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Product</h3>', unsafe_allow_html=True)
+        st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
-  
-        # Expander for IQR table
-    with st.expander("Target and premuim by Product"):
-            st.dataframe(monthly_premium.style.format(precision=2))
+    cl1, cl2 =st.columns(2)
+
+    with cl1:
+        with st.expander("Total Premium by Sales Team over Time"):
+            st.dataframe(area_chart_total_insured.style.format(precision=2))
+        
+    with cl2:  
+            with st.expander("Yearly average premium"):
+                    st.dataframe(yearly_avg_premium.style.format(precision=2))
 
 
+    # Group data by "Cover Type" and "Product_name" and sum the Total Premium
+    cover_product_premium = df.groupby(['Cover Type', 'Product_name'])['Total Premium'].sum().unstack().fillna(0)
 
-    colc1, colc2 = st.columns(2)
-    
+    # Create the layout columns
+    cls1, cls2 = st.columns(2)
 
-    # Group data by "Intermediary name" and "Cover Type" and sum the Total Premium
-    cover_type_by_intermediary = eden_care_df.groupby(['Intermediary name', 'Cover Type'])['Total Premium'].sum().unstack().fillna(0)
+    with cls2:
+        fig_cover_product_premium = go.Figure()
 
 
-    with colc1:
-        fig_cover_type_by_intermediary = go.Figure()
-
-        for idx, cover_type in enumerate(cover_type_by_intermediary.columns):
-            fig_cover_type_by_intermediary.add_trace(go.Bar(
-                x=cover_type_by_intermediary.index,
-                y=cover_type_by_intermediary[cover_type],
-                name=cover_type,
+        for idx, product_name in enumerate(cover_product_premium.columns):
+            fig_cover_product_premium.add_trace(go.Bar(
+                x=cover_product_premium.index,
+                y=cover_product_premium[product_name],
+                name=product_name,
                 textposition='inside',
                 textfont=dict(color='white'),
                 hoverinfo='x+y+name',
@@ -491,9 +464,9 @@ if not df.empty:
             ))
 
         # Set layout for the Total Premium chart
-        fig_cover_type_by_intermediary.update_layout(
+        fig_cover_product_premium.update_layout(
             barmode='group',  # Grouped bar chart
-            xaxis_title="Intermediary Name",
+            xaxis_title="Cover Type",
             yaxis_title="Total Premium",
             font=dict(color='Black'),
             xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
@@ -502,61 +475,81 @@ if not df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Premium Distribution by Cover Type by Sales Team</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig_cover_type_by_intermediary, use_container_width=True)
+        st.markdown('<h3 class="custom-subheader">Premium Distribution by Cover Type and Product</h3>', unsafe_allow_html=True)
+        st.plotly_chart(fig_cover_product_premium, use_container_width=True)
 
 
 
-    # Group by Client Name and Client Segment, then sum the Total Premium
-    df_grouped = eden_care_df.groupby(['Client Name', 'Intermediary name'])['Total Premium'].sum().nlargest(15).reset_index()
+ # Calculate the Total Premium by Client Segment
+    int_owner = df.groupby("Product_name")["Total Premium"].sum().reset_index()
+    int_owner.columns = ["Product", "Total Premium"]    
 
-    # Get the top 10 clients by Total Premium
-    top_10_clients = df_grouped.groupby('Client Name')['Total Premium'].sum().reset_index()
-
-    # Filter the original DataFrame to include only the top 10 clients
-    client_df = df_grouped[df_grouped['Client Name'].isin(top_10_clients['Client Name'])]
-    # Sort the client_df by Total Premium in descending order
-    client_df = client_df.sort_values(by='Total Premium', ascending=False)
+    with cls1:
+        # Display the header
+        st.markdown('<h3 class="custom-subheader">Total Premium by Product</h3>', unsafe_allow_html=True)
 
 
-    with colc2:
-        # Create the bar chart
-        fig = go.Figure()
+        # Create a donut chart
+        fig = px.pie(int_owner, names="Product", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
 
-
-                # Add bars for each Client Segment
-        for idx, Client_Segment in enumerate(client_df['Intermediary name'].unique()):
-                    Client_Segment_data = client_df[client_df['Intermediary name'] == Client_Segment]
-                    fig.add_trace(go.Bar(
-                        x=Client_Segment_data['Client Name'],
-                        y=Client_Segment_data['Total Premium'],
-                        name=Client_Segment,
-                        text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total Premium']],
-                        textposition='auto',
-                        marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-                    ))
-
-        fig.update_layout(
-                    barmode='stack',
-                    yaxis_title="Total Premium",
-                    xaxis_title="Client Name",
-                    font=dict(color='Black'),
-                    xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                    yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                    margin=dict(l=0, r=0, t=30, b=50)
-                )
-
-                # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Client Premium by Sales Team</h3>', unsafe_allow_html=True)
+        # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-    colc1, colc2 = st.columns(2)
-    with colc2:  
-        with st.expander("Client Premium by Sales Team"):
-                st.dataframe(client_df.style.format(precision=2))
+    cl1, cl2 =st.columns(2)
 
-    with colc1:
-        # Expander for IQR table
-        with st.expander("Premium for Sales Team"):
-            st.dataframe(cover_type_by_intermediary.style.format(precision=2))
+    with cl2:  
+            with st.expander("Premium by cover type and product"):
+                    st.dataframe(cover_product_premium.style.format(precision=2))
+    with cl1:  
+            with st.expander("Total Product Premium"):
+                    st.dataframe(int_owner.style.format(precision=2))
 
+
+    cls1, cls2 = st.columns(2)
+
+    # Group data by "Start Date Month" and "Intermediary" and sum the Total Premium
+    monthly_premium = df.groupby(['Start Month', 'Product_name'])['Total Premium'].sum().unstack().fillna(0)
+
+
+    with cls1:
+        # Define custom colors
+        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+
+        fig_monthly_premium = go.Figure()
+
+        for idx, intermediary in enumerate(monthly_premium.columns):
+            fig_monthly_premium.add_trace(go.Bar(
+                x=monthly_premium.index,
+                y=monthly_premium[intermediary],
+                name=intermediary,
+                textposition='inside',
+                textfont=dict(color='white'),
+                hoverinfo='x+y+name',
+                marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
+            ))
+
+
+
+        # Set layout for the Total Premium chart
+        fig_monthly_premium.update_layout(
+            barmode='group',  # Grouped bar chart
+            xaxis_title="Start Month",
+            yaxis_title="Total Premium",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50),
+        )
+
+        # Display the Total Premium chart in Streamlit
+        st.markdown('<h3 class="custom-subheader">Monthly Premium Distribution by Product</h3>', unsafe_allow_html=True)
+        st.plotly_chart(fig_monthly_premium, use_container_width=True)
+
+    clm1, clm2 = st.columns(2)
+
+    with clm1:
+        # Create an expandable section for the table
+        with st.expander("View Monthly Total Premium by Product"):
+            st.dataframe(monthly_premium.style.format(precision=2))

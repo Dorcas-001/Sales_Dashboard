@@ -48,7 +48,6 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
-df1 = df1[df1['Start Date'].dt.year == 2024]
 
      # Calculate metrics
 scaling_factor = 1_000_000
@@ -232,13 +231,32 @@ if client_name:
 if not filter_description:
     filter_description = "All df"
 
+df_2024 = df[df['Start Date'].dt.year == 2024]
 
     # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = filtered_df[(filtered_df['Type'] == 'Endorsement')]
-df_new = filtered_df[filtered_df['Cover Type'] == 'New insured']
+df_new = filtered_df[filtered_df['Cover Type'] == 'New Insured']
 df_renew = filtered_df[filtered_df['Cover Type'] == 'Renew/Insured']
 df_proactiv = filtered_df[filtered_df['Product_name'] == 'ProActiv']
 df_health = filtered_df[filtered_df['Product_name'] == 'Health']
+
+df_renew_2024 = df_2024[df_2024['Cover Type'] == 'Renew/Insured']
+df_proactiv_2024 = df_2024[df_2024['Product_name'] == 'ProActiv']
+df_health_2024 = df_2024[df_2024['Product_name'] == 'Health']
+
+# Further filter by Cover Type within each product
+df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']
+df_proactiv_renew = df_proactiv[df_proactiv['Cover Type'] == 'Renew/Insured']
+
+df_health_new = df_health[df_health['Cover Type'] == 'New Insured']
+df_health_renew = df_health[df_health['Cover Type'] == 'Renew/Insured']
+
+df_proactiv_target = filtered_df[filtered_df['Product'] == 'ProActiv']
+df_health_target = filtered_df[filtered_df['Product'] == 'Health']
+df_renewals = filtered_df[filtered_df['Product'] == 'Renewals']
+
+
+
 
 if not filtered_df.empty:
 
@@ -258,14 +276,36 @@ if not filtered_df.empty:
     total_pro = (df_proactiv['Total Premium'].sum())/scale
     total_health = (df_health['Total Premium'].sum())/scale
 
+    # Calculate total premiums for specific combinations
+    total_proactiv_new = (df_proactiv_new['Total Premium'].sum()) / scale
+    total_proactiv_renew = (df_proactiv_renew['Total Premium'].sum()) / scale
+    total_health_new = (df_health_new['Total Premium'].sum()) / scale
+    total_health_renew = (df_health_renew['Total Premium'].sum()) / scale
 
-     # Calculate metrics
+    # Calculate total premiums for specific combinations
+    total_renewals = (df_renewals['Total Premium'].sum())/scale
+    total_pro_target = (df_proactiv_target['Total Premium'].sum())/scale
+    total_health_target = (df_health_target['Total Premium'].sum())/scale
+
+    # Calculate total premiums for specific combinations
+    total_renew_2024 = (df_renew_2024['Total Premium'].sum())/scale
+    total_pro_2024 = (df_proactiv_2024['Total Premium'].sum())/scale
+    total_health_2024 = (df_health_2024['Total Premium'].sum())/scale
+
+    # Calculate metrics
     scaling_factor = 1_000_000  # For millions
     scaled = 1_000_000_000  # for billions
 
-    total_target = (filtered_df["Target"].sum())/scale
-    variance = total_in_pre_scaled-total_target
-    percent_var = (variance/total_target) *100
+
+
+    health_variance = (total_health_2024-total_health_target)
+    health_percent_var = (health_variance/total_health_target) *100
+    
+    pro_variance = total_pro_2024-total_pro_target
+    pro_percent_var = (pro_variance/total_pro_target) *100
+
+    renew_variance = total_renew_2024-total_renewals
+    renew_percent_var = (renew_variance/total_renewals) *100
 
     filtered_df["Total Premium"] = pd.to_numeric(filtered_df["Total Premium"], errors='coerce').fillna(0).astype(int)
     filtered_df["No. of staffs"] = pd.to_numeric(filtered_df["No. of staffs"], errors='coerce').fillna(0).astype(int)
@@ -343,7 +383,7 @@ if not filtered_df.empty:
             """, unsafe_allow_html=True)
 
 
-    st.markdown('<h2 class="custom-subheader">For Gross Written Premium</h2>', unsafe_allow_html=True)    
+    st.markdown('<h3 class="custom-subheader">For Health Insurrance Gross Written Premium or ProActiv Premium</h3>', unsafe_allow_html=True)    
 
 
     # Display metrics
@@ -359,24 +399,6 @@ if not filtered_df.empty:
     display_metric(col1, "Lowest Premium per Client", f"RWF {lowest_premium:.0f} K")
     display_metric(col2, "Highest Premium per Client", f"RWF {highest_premium:.0f} M",)
 
-    st.markdown('<h2 class="custom-subheader">For Product</h2>', unsafe_allow_html=True) 
-    col1, col2, col3, col4= st.columns(4)
-    display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
-
-    display_metric(col2, "Total New Sales", value=f"RWF {total_new:.0f} M")
-    display_metric(col3, "Total Renewals", value=f"RWF {total_renew:.0f} M")
-    display_metric(col4, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
-
-
-    st.markdown('<h2 class="custom-subheader">For Target</h2>', unsafe_allow_html=True) 
-    col1, col2, col3, col4= st.columns(4)
-
-    display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
-    display_metric(col2, f"Target Premium so Far ({filter_description.strip()})", f"RWF {total_target:.0f} M")
-    display_metric(col3, "Variance", f"RWF {variance:.0f} M")
-    display_metric(col4, "Percentage Variance", value=f"RWF {percent_var:.0f} %")
-
-
     grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
     # Calculate key metrics
@@ -388,3 +410,50 @@ if not filtered_df.empty:
     display_metric(cols2, "Total Principal Members", total_mem)
     display_metric(cols3, "Total Dependents", total_dependents)
     display_metric(cols4, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
+
+
+    st.markdown('<h2 class="custom-subheader">For Health Insurrance</h2>', unsafe_allow_html=True) 
+    col1, col2, col3 = st.columns(3)
+    display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
+    display_metric(col2, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
+
+    st.markdown('<h2 class="custom-subheader">For ProActiv Premium</h2>', unsafe_allow_html=True) 
+    col1, col2, col3= st.columns(3)
+
+    display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col2, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
+
+    st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 
+    col1, col2, col3= st.columns(3)
+
+    display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
+    display_metric(col2, "YTD Health Target Sales", f"RWF {total_health_target:.0f} M")
+    display_metric(col3, "Total Health Sales", f"RWF {total_health:.0f} M")
+    display_metric(col1, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
+    display_metric(col2, "Variance", f"RWF {health_variance:.1f} M")
+    display_metric(col3, "Percentage Variance", value=f"RWF {health_percent_var:.2f} %")
+
+    st.markdown('<h2 class="custom-subheader">For ProActiv Target</h2>', unsafe_allow_html=True) 
+    col1, col2, col3= st.columns(3)
+
+    display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
+    display_metric(col2, "YTD ProActiv Target Sales", f"RWF {total_pro_target:.0f} M")
+    display_metric(col3, "Total Health Sales", f"RWF {total_pro:.0f} M")
+    display_metric(col1, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
+    display_metric(col2, "Variance", f"RWF {pro_variance:.0f} M")
+    display_metric(col3, "Percentage Variance", value=f"RWF {pro_percent_var:.0f} %")
+
+    st.markdown('<h2 class="custom-subheader">For Renewals Target</h2>', unsafe_allow_html=True) 
+    col1, col2, col3= st.columns(3)
+
+    display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
+    display_metric(col2, "YTD Renewal Target Premium", f"RWF {total_renewals:.0f} M")
+    display_metric(col3, "Total Renewals", f"RWF {total_renew:.0f} M")
+    display_metric(col1, "YTD Renewals", f"RWF {total_renew_2024:.0f} M")
+    display_metric(col2, "Variance", f"RWF {renew_variance:.0f} M")
+    display_metric(col3, "Percentage Variance", value=f"RWF {renew_percent_var:.0f} %")
+
+
+

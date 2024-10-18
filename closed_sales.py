@@ -111,8 +111,9 @@ sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_
 st.sidebar.header("Filters")
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
-channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
 product = st.sidebar.multiselect("Select Product", options=df['Product_name'].unique())
+channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
+segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
 owner = st.sidebar.multiselect("Select Sales Team", options=df['Owner'].unique())
 channel_name = st.sidebar.multiselect("Select Intermediary Name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
@@ -125,7 +126,9 @@ if month:
 if cover:
     df = df[df['Cover Type'].isin(cover)]
 if channel:
-    df = df[df['Channel'].isin(cover)]
+    df = df[df['Channel'].isin(channel)]
+if segment:
+    df = df[df['Client Segment'].isin(segment)]
 if product:
     df = df[df['Product'].isin(product)]
 if owner:
@@ -146,6 +149,8 @@ if channel:
     filter_description += f"{', '.join(channel)} "
 if product:
     filter_description += f"{', '.join(product)} "
+if segment:
+    filter_description += f"{', '.join(segment)} "
 if owner:
     filter_description += f"{', '.join(owner)} "
 if channel_name:
@@ -193,7 +198,7 @@ df = df[
 # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = df[(df['Type'] == 'Endorsement') & (df['Product_name'] == 'Health')]
 # Filter the concatenated DataFrame to include only endorsements
-df_new = df[df['Cover Type'] == 'New insured']
+df_new = df[df['Cover Type'] == 'New Insured']
 df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
@@ -410,7 +415,7 @@ if not df.empty:
     cl1, cl2 =st.columns(2)
 
     with cl1:
-        with st.expander("Total Premium by Sales Team over Time"):
+        with st.expander("Total Premium by Product over Time"):
             st.dataframe(area_chart_total_insured.style.format(precision=2))
         
     with cl2:  
@@ -650,9 +655,33 @@ if not df.empty:
     cl1, cl2 =st.columns(2)
 
     with cl1:
-        with st.expander("Total Health sales by cover type"):
+        with st.expander("Total sales by channel"):
             st.dataframe(merged.style.format(precision=2))
         
     with cl2:  
             with st.expander("Total Channel Premium"):
                     st.dataframe(int_owner.style.format(precision=2))
+
+
+    cl1, cl2 =st.columns(2)
+
+ # Calculate the Total Premium by Client Segment
+    int_owner = df.groupby("Client Segment")["Total Premium"].sum().reset_index()
+    int_owner.columns = ["Segment", "Total Premium"]    
+
+    with cl1:
+        # Display the header
+        st.markdown('<h3 class="custom-subheader">Total Premium by Client Segment</h3>', unsafe_allow_html=True)
+
+
+        # Create a donut chart
+        fig = px.pie(int_owner, names="Segment", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig.update_traces(textposition='inside', textinfo='value+percent')
+        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
+
+        # Display the chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("Total Health sales by client segment"):
+            st.dataframe(merged.style.format(precision=2))
+        

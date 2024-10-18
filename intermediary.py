@@ -148,6 +148,8 @@ year = st.sidebar.multiselect("Select Year", options=sorted(df['Start Date Year'
 month = st.sidebar.multiselect("Select Month", options=sorted_months)
 product = st.sidebar.multiselect("Select Product", options=df['Product_name'].unique())
 channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
+segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
+
 channel_name = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
@@ -193,6 +195,8 @@ if month:
     filtered_df = filtered_df[filtered_df['Start Month'].isin(month)]
 if channel:
     filtered_df = filtered_df[filtered_df['Channel'].isin(channel)]
+if segment:
+    filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
 if channel_name:
     filtered_df = filtered_df[filtered_df['Intermediary name'].isin(channel_name)]
 if product:
@@ -584,7 +588,7 @@ if not filtered_df.empty:
     int_premiums = filtered_df.groupby("Channel")["Average Premium"].sum().reset_index()
     int_premiums.columns = ["Channel", "Total Premium"]    
 
-    with cul2:
+    with cul1:
         # Display the header
         st.markdown('<h3 class="custom-subheader">Average Premium by Channel</h3>', unsafe_allow_html=True)
 
@@ -599,36 +603,6 @@ if not filtered_df.empty:
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
- # Calculate the Total Premium by intermediary
-    prod_premiums = filtered_df.groupby("Product_name")["Average Premium"].sum().reset_index()
-    prod_premiums.columns = ["Product", "Total Premium"]    
-
-    with cul1:
-        # Display the header
-        st.markdown('<h3 class="custom-subheader">Average Premium by Product</h3>', unsafe_allow_html=True)
-
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
-
-        # Create a donut chart
-        fig = px.pie(prod_premiums, names="Product", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
-        fig.update_traces(textposition='inside', textinfo='value+percent')
-        fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
-
-        # Display the chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-
-    cul1, cul2 = st.columns(2)
-
-    with cul2:
-        with st.expander("Average Premium by Channel"):
-            st.dataframe(int_premiums.style.format(precision=2))
-
-    with cul1:
-        with st.expander("Average Premium by Product"):
-            st.dataframe(prod_premiums.style.format(precision=2))
-
-
     # Group by Client Name and Intermediary, then sum the Total Premium
     df_grouped = filtered_df.groupby(['Intermediary name', 'Channel'])['Total Premium'].sum().reset_index()
 
@@ -640,7 +614,7 @@ if not filtered_df.empty:
     # Sort the client_df by Total Premium in descending order
     client_df = client_df.sort_values(by='Total Premium', ascending=False)
    
-    with cul1:
+    with cul2:
             # Create the bar chart
         fig = go.Figure()
 
@@ -674,6 +648,17 @@ if not filtered_df.empty:
         st.plotly_chart(fig, use_container_width=True)
 
 
+    cul1, cul2 = st.columns(2)
+
+    with cul1:
+        with st.expander("Average Premium by Channel"):
+            st.dataframe(int_premiums.style.format(precision=2))
+    with cul2:
+        with st.expander("Intermedirary premium by Channel"):
+            st.dataframe(client_df.style.format(precision=2))
+
+
+
 
     # Group by Client Name and Intermediary, then sum the Total Premium
     df_grouped = filtered_df.groupby(['Client Name', 'Channel'])['Total Premium'].sum().reset_index()
@@ -686,15 +671,15 @@ if not filtered_df.empty:
     # Sort the client_df by Total Premium in descending order
     int_df = int.sort_values(by='Total Premium', ascending=False)
    
-    with cul2:
+
             # Create the bar chart
-        fig = go.Figure()
+    fig = go.Figure()
 
             # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
+    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
             # Add bars for each intermediary
-        for idx, intermediary in enumerate(int_df['Channel'].unique()):
+    for idx, intermediary in enumerate(int_df['Channel'].unique()):
                 intermediary_data = int_df[int_df['Channel'] == intermediary]
                 fig.add_trace(go.Bar(
                     x=intermediary_data['Client Name'],
@@ -705,7 +690,7 @@ if not filtered_df.empty:
                     marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
                 ))
 
-        fig.update_layout(
+    fig.update_layout(
                 barmode='stack',
                 yaxis_title="Total Premium",
                 xaxis_title="Client Name",
@@ -716,15 +701,10 @@ if not filtered_df.empty:
             )
 
             # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Top 15 Client Premium by Channel</h3>', unsafe_allow_html=True)
-        st.plotly_chart(fig, use_container_width=True)
+    st.markdown('<h3 class="custom-subheader">Top 15 Client Premium by Channel</h3>', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
 
-
-    with cul1:
-        with st.expander("Intermedirary premium by Channel"):
-            st.dataframe(client_df.style.format(precision=2))
-    with cul2:
-        with st.expander("Client Premium by Channel"):
+    with st.expander("Client Premium by Channel"):
             st.dataframe(int_df.style.format(precision=2))
 
 
