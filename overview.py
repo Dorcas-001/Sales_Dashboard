@@ -430,16 +430,16 @@ if not filtered_df.empty:
 
     display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
     display_metric(col2, "YTD Health Target Sales", f"RWF {total_health_target:.0f} M")
-    display_metric(col1, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
-    display_metric(col2, "Variance", f"RWF {health_variance:.1f} M")
-    display_metric(col3, "Percentage Variance", value=f"RWF {health_percent_var:.2f} %")
+    display_metric(col3, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
+    display_metric(col1, "Variance", f"RWF {health_variance:.1f} M")
+    display_metric(col2, "Percentage Variance", value=f"RWF {health_percent_var:.2f} %")
 
     st.markdown('<h2 class="custom-subheader">For ProActiv Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
     display_metric(col1, "2024 Target", f"RWF {target_2024:.0f} M")
     display_metric(col2, "YTD ProActiv Target Sales", f"RWF {total_pro_target:.0f} M")
-    display_metric(col2, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
+    display_metric(col3, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {pro_variance:.0f} M")
     display_metric(col2, "Percentage Variance", value=f"RWF {pro_percent_var:.0f} %")
 
