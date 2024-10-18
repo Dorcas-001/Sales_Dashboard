@@ -224,8 +224,10 @@ if client_name:
 if not filter_description:
     filter_description = "All df"
 
-df_proactiv = df[df['Product_name'] == 'ProActiv']
-df_health = df[df['Product_name'] == 'Health']
+
+filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
+df_proactiv = filtered_df[filtered_df['Product_name'] == 'ProActiv']
+df_health = filtered_df[filtered_df['Product_name'] == 'Health']
 
 if not filtered_df.empty:  
 
@@ -277,7 +279,6 @@ if not filtered_df.empty:
     scaling_factor = 1_000_000  # For millions
     scaled = 1_000_000_000  # for billions
 
-    filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
 
     total_clients = filtered_df["Client Name"].nunique()
     total_in_pre = filtered_df["Total Premium"].sum()
@@ -322,16 +323,16 @@ if not filtered_df.empty:
     display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
 
     st.markdown('<h3 class="custom-subheader">For Health Insurance Lives Covered</h3>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
-    display_metric(col1, "Total Health Principal Members", value=f"RWF {total_health_pm:.0f} M")
-    display_metric(col2, "Total Health Dependents", value=f"RWF {total_health_dep:.0f} M")
+    display_metric(col1, "Total Health Principal Members", total_health_pm)
+    display_metric(col2, "Total Health Dependents", total_health_dep)
 
     st.markdown('<h3 class="custom-subheader">For ProActiv Lives Covered</h3>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
-    display_metric(col1, "Total ProActiv Principal Members", value=f"RWF {total_pro_pm:.0f} M")
-    display_metric(col2, "Total ProActiv Dependents", value=f"RWF {total_pro_dep:.0f} M")
+    display_metric(col1, "Total ProActiv Principal Members", total_pro_pm)
+    display_metric(col2, "Total ProActiv Dependents", total_pro_dep)
 
 
     
