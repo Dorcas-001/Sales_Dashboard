@@ -306,7 +306,7 @@ if not df.empty:
     col1, col2, col3 = st.columns(3)
 
     # Display metrics
-    display_metric(col1, f"Total Premium ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
+    display_metric(col1, f"Total Sales ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
     display_metric(col2, "Total New Sales", value=f"RWF {total_new:.0f} M")
     display_metric(col3, "Total Renewals", value=f"RWF {total_renew:.0f} M")
     
@@ -314,13 +314,13 @@ if not df.empty:
     col1, col2, col3 = st.columns(3)
 
     display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
-    display_metric(col2, "Total New Health Premium", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col2, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
     display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
 
     st.markdown('<h3 class="custom-subheader">For ProActiv</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
-    display_metric(col2, "Total New ProActiv Premium", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col2, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
     display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
 
 
@@ -477,7 +477,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Premium and Number of Sales by Sales Team</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales and Number of Sales by Sales Team</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_premium_by_intermediary, use_container_width=True)
 
 
@@ -569,7 +569,7 @@ if not df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Premium Distribution by Cover Type by Sales Team</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Sales Distribution by Cover Type by Sales Team</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_cover_type_by_intermediary, use_container_width=True)
 
 
@@ -614,7 +614,7 @@ if not df.empty:
                 )
 
                 # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Client Premium by Sales Team</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Client Sales by Sales Team</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     colc1, colc2 = st.columns(2)

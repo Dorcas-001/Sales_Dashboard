@@ -317,7 +317,7 @@ if not df.empty:
             </div>
             """, unsafe_allow_html=True)
     
-    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For All Sales</h3>', unsafe_allow_html=True)
 
     # Create 4-column layout for metric cards
     col1, col2, col3, col4 = st.columns(4)

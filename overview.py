@@ -452,6 +452,7 @@ if not filtered_df.empty:
     display_metric(col1, "Lowest Sales per Employer group", f"RWF {lowest_premium:.0f} K")
     display_metric(col2, "Highest Sales per Employer group", f"RWF {highest_premium:.0f} M",)
 
+
     grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
     # Calculate key metrics

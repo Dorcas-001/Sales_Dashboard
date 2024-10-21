@@ -293,10 +293,7 @@ if not df.empty:
     total_pro_2024 = (df_proactiv_2024['Total Premium'].sum())/scale
     total_health_2024 = (df_health_2024['Total Premium'].sum())/scale
 
-    # Calculate metrics
-    scaling_factor = 1_000_000  # For millions
-    scaled = 1_000_000_000  # for billions
-
+  
 
 
     health_variance = (total_health_2024-total_health_target)
@@ -358,25 +355,25 @@ if not df.empty:
 
     # Display metrics
     col1, col2 = st.columns(2)
-    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.1f} B")
+    display_metric(col1, "Total Sales", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col2, "Total Endorsements", f"RWF {total_endorsement_premium:.0f} M")
 
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "2024 Target Health Premium", f"RWF {total_health_target_ytd:.0f} M")
-    display_metric(col2, "YTD Health Target Premium", f"RWF {total_health_target:.0f} M")
-    display_metric(col3, "YTD Actual Health Premium", f"RWF {total_health_2024:.0f} M")
+    display_metric(col1, "2024 Target Health Sales", f"RWF {total_health_target_ytd:.0f} M")
+    display_metric(col2, "YTD Health Target Sales", f"RWF {total_health_target:.0f} M")
+    display_metric(col3, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {health_variance:.1f} M")
     display_metric(col2, "Percentage Variance", value=f"{health_percent_var:.2f} %")
 
     st.markdown('<h2 class="custom-subheader">For ProActiv Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "2024 Target ProActiv Premium", f"RWF {total_pro_target_ytd:.0f} M")
-    display_metric(col2, "YTD ProActiv Target Premium", f"RWF {total_pro_target:.0f} M")
-    display_metric(col3, "YTD Actual ProActiv Premium", f"RWF {total_pro_2024:.0f} M")
+    display_metric(col1, "2024 Target ProActiv Sales", f"RWF {total_pro_target_ytd:.0f} M")
+    display_metric(col2, "YTD ProActiv Target Sales", f"RWF {total_pro_target:.0f} M")
+    display_metric(col3, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {pro_variance:.0f} M")
     display_metric(col2, "Percentage Variance", value=f"{pro_percent_var:.0f} %")
 
@@ -384,8 +381,8 @@ if not df.empty:
     col1, col2, col3= st.columns(3)
 
     display_metric(col1, "2024 Target Renewals", f"RWF {total_renewals_ytd:.0f} M")
-    display_metric(col2, "YTD Renewal Target Premium", f"RWF {total_renewals:.0f} M")
-    display_metric(col3, "YTD Actual Renewed Premium", f"RWF {total_renew_2024:.0f} M")
+    display_metric(col2, "YTD Renewal Target Sales", f"RWF {total_renewals:.0f} M")
+    display_metric(col3, "YTD Actual Renewed Sales", f"RWF {total_renew_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {renew_variance:.0f} M")
     display_metric(col2, "Percentage Variance", value=f"{renew_percent_var:.0f} %")
 
@@ -486,7 +483,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Sales Team</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Target Sales vs Actual Sales by Sales Team</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
 
@@ -533,7 +530,7 @@ if not df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Target and Premium by Product</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Target Sales vs Actual Sales  by Product</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_totals, use_container_width=True)
 
  
@@ -556,7 +553,7 @@ if not df.empty:
 
     with cls1:
         # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Premium by Sales Team</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales by Sales Team</h3>', unsafe_allow_html=True)
 
 
         # Create a donut chart
