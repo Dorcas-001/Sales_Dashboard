@@ -151,7 +151,6 @@ sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_
 
 
 # Ensure the 'Start Month' column is in datetime format if needed
-df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
 df['Start Year'] = pd.to_numeric(df['Start Year'], errors='coerce').dropna().astype(int)
 

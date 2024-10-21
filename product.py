@@ -43,6 +43,50 @@ df = pd.concat([df0, df1])
 # Ensure the 'Start Date' column is in datetime format if needed
 df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
+# Get minimum and maximum dates for the date input
+startDate = df["Start Date"].min()
+endDate = df["Start Date"].max()
+
+# Define CSS for the styled date input boxes
+st.markdown("""
+    <style>
+    .date-input-box {
+        border-radius: 10px;
+        text-align: left;
+        margin: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .date-input-title {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
+
 
 # Sidebar styling and logo
 st.markdown("""

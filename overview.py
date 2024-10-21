@@ -143,6 +143,50 @@ st.markdown("""
 df["Start Date"] = pd.to_datetime(df["Start Date"], errors='coerce')
 
 
+# Get minimum and maximum dates for the date input
+startDate = df["Start Date"].min()
+endDate = df["Start Date"].max()
+
+# Define CSS for the styled date input boxes
+st.markdown("""
+    <style>
+    .date-input-box {
+        border-radius: 10px;
+        text-align: left;
+        margin: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    .date-input-title {
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
+
 
 
 # Dictionary to map month names to their order
@@ -304,7 +348,6 @@ if not filtered_df.empty:
 
     # Calculate metrics
     scaling_factor = 1_000_000  # For millions
-    scaled = 1_000_000_000  # for billions
 
 
 
@@ -336,8 +379,8 @@ if not filtered_df.empty:
 
 
     # Scale the sums
-    total_pre_scaled = total_pre / scaled
-    total_in_pre_scaled = total_in_pre / scaled
+    total_pre_scaled = total_pre / scaling_factor
+    total_in_pre_scaled = total_in_pre / scaling_factor
     average_pre_scaled = average_pre/scaling_factor
     gwp_average_scaled = gwp_average/scaling_factor
 
@@ -399,15 +442,15 @@ if not filtered_df.empty:
     # Display metrics
     col1, col2, col3= st.columns(3)
     display_metric(col1, "Total Clients", total_clients)
-    display_metric(col2, "Total Premium", f"RWF {total_in_pre_scaled:.1f} B")
+    display_metric(col2, "Total Sales", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col3, "Total Principal Members", total_mem)
 
     display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
     display_metric(col2, "Total Endorsements", f"RWF {total_endorsement_premium:.0f} M")
     display_metric(col3, "Average GWP per Employer group", f"RWF {gwp_average_scaled:.0f} M")
 
-    display_metric(col1, "Lowest Premium per Employer group", f"RWF {lowest_premium:.0f} K")
-    display_metric(col2, "Highest Premium per Employer group", f"RWF {highest_premium:.0f} M",)
+    display_metric(col1, "Lowest Sales per Employer group", f"RWF {lowest_premium:.0f} K")
+    display_metric(col2, "Highest Sales per Employer group", f"RWF {highest_premium:.0f} M",)
 
     grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
@@ -424,32 +467,32 @@ if not filtered_df.empty:
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance</h2>', unsafe_allow_html=True) 
     col1, col2, col3 = st.columns(3)
-    display_metric(col1, "Total Health Premium", value=f"RWF {total_health:.0f} M")
-    display_metric(col2, "Total New Health Premium", value=f"RWF {total_health_new:.0f} M")
+    display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
+    display_metric(col2, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
     display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
 
     st.markdown('<h2 class="custom-subheader">For ProActiv Premium</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "Total ProActiv Premium", value=f"RWF {total_pro:.0f} M")
-    display_metric(col2, "Total New ProActiv Premium", value=f"RWF {total_proactiv_new:.0f} M")
+    display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
+    display_metric(col2, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
     display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "2024 Target Health Premium", f"RWF {total_health_target_ytd:.0f} M")
-    display_metric(col2, "YTD Health Target Premium", f"RWF {total_health_target:.0f} M")
-    display_metric(col3, "YTD Actual Health Premium", f"RWF {total_health_2024:.0f} M")
+    display_metric(col1, "2024 Target Health Sales", f"RWF {total_health_target_ytd:.0f} M")
+    display_metric(col2, "YTD Health Target Sales", f"RWF {total_health_target:.0f} M")
+    display_metric(col3, "YTD Actual Health Sales", f"RWF {total_health_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {health_variance:.1f} M")
     display_metric(col2, "Percentage Variance", value=f"{health_percent_var:.2f} %")
 
     st.markdown('<h2 class="custom-subheader">For ProActiv Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "2024 Target ProActiv Premium", f"RWF {total_pro_target_ytd:.0f} M")
-    display_metric(col2, "YTD ProActiv Target Premium", f"RWF {total_pro_target:.0f} M")
-    display_metric(col3, "YTD Actual ProActiv Premium", f"RWF {total_pro_2024:.0f} M")
+    display_metric(col1, "2024 Target ProActiv Sales", f"RWF {total_pro_target_ytd:.0f} M")
+    display_metric(col2, "YTD ProActiv Target Sales", f"RWF {total_pro_target:.0f} M")
+    display_metric(col3, "YTD Actual ProActiv Sales", f"RWF {total_pro_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {pro_variance:.0f} M")
     display_metric(col2, "Percentage Variance", value=f"{pro_percent_var:.0f} %")
 
@@ -457,8 +500,8 @@ if not filtered_df.empty:
     col1, col2, col3= st.columns(3)
 
     display_metric(col1, "2024 Target Renewals", f"RWF {total_renewals_ytd:.0f} M")
-    display_metric(col2, "YTD Renewal Target Premium", f"RWF {total_renewals:.0f} M")
-    display_metric(col3, "YTD Actual Renewed Premium", f"RWF {total_renew_2024:.0f} M")
+    display_metric(col2, "YTD Renewal Target Sales", f"RWF {total_renewals:.0f} M")
+    display_metric(col3, "YTD Actual Renewed Sales", f"RWF {total_renew_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {renew_variance:.0f} M")
     display_metric(col2, "Percentage Variance", value=f"{renew_percent_var:.0f} %")
 
