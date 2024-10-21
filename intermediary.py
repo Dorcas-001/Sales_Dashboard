@@ -220,7 +220,7 @@ if product:
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
-    filter_description = "All df"
+    filter_description = "All data"
 
 
 df_agent = filtered_df[filtered_df['Channel'] == 'Agent']
@@ -333,23 +333,23 @@ if not filtered_df.empty:
     col1, col2, col3 = st.columns(3)
 
     # Display metrics
-    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col2, "Total Health Premium", f"RWF {total_health:.0f} B")
-    display_metric(col3, "Total ProActiv Premium", f"RWF {total_pro:.0f} M")
+    display_metric(col1, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Health Sales", f"RWF {total_health:.0f} M")
+    display_metric(col3, "Total ProActiv Sales", f"RWF {total_pro:.0f} M")
 
-    st.markdown('<h3 class="custom-subheader">For Health Insurance Premium by Channel</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For Health Insurance Sales by Channel</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
 
-    display_metric(col1, "Total Health Agent Premium", value=f"RWF {total_agent_health:.0f} M")
-    display_metric(col2, "Total Health Direct Premium", value=f"RWF {total_direct_health:.0f} M")
-    display_metric(col3, "Total Health Broker Premium", value=f"RWF {total_broker_health:.0f} M")
+    display_metric(col1, "Total Health Agent Sales", value=f"RWF {total_agent_health:.0f} M")
+    display_metric(col2, "Total Health Direct Sales", value=f"RWF {total_direct_health:.0f} M")
+    display_metric(col3, "Total Health Broker Sales", value=f"RWF {total_broker_health:.0f} M")
 
-    st.markdown('<h3 class="custom-subheader">For ProActiv Premium by Channel</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For ProActiv Sales by Channel</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
 
-    display_metric(col1, "Total ProActiv Agent Premium", value=f"RWF {total_agent_pro:.0f} M")
-    display_metric(col2, "Total ProActiv Direct Premium", value=f"RWF {total_direct_pro:.0f} M")
-    display_metric(col3, "Total ProActiv Broker Premium", value=f"RWF {total_broker_pro:.0f} M")
+    display_metric(col1, "Total ProActiv Agent Sales", value=f"RWF {total_agent_pro:.0f} M")
+    display_metric(col2, "Total ProActiv Direct Sales", value=f"RWF {total_direct_pro:.0f} M")
+    display_metric(col3, "Total ProActiv Broker Sales", value=f"RWF {total_broker_pro:.0f} M")
 
 
 
@@ -442,7 +442,7 @@ if not filtered_df.empty:
         plt.yticks(fontsize=9, color="gray")
 
         # Set chart title
-        st.markdown('<h3 class="custom-subheader">Total Premium by Channel over Time</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales by Channel over Time</h3>', unsafe_allow_html=True)
 
         # Format the y-axis
         formatter = FuncFormatter(millions)
@@ -527,7 +527,7 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Average Premium Yearly by Channel</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Yearly Sales by Channel</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
@@ -575,7 +575,7 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Interquartile Range of Premium by Channel</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Interquartile Range of Sales by Channel</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_iqr, use_container_width=True)
 
     
@@ -620,7 +620,7 @@ if not filtered_df.empty:
 
     with cul1:
         # Display the header
-        st.markdown('<h3 class="custom-subheader">Average Premium by Channel</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Sales by Channel</h3>', unsafe_allow_html=True)
 
         # Define custom colors
         custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
@@ -731,7 +731,7 @@ if not filtered_df.empty:
             )
 
             # Display the chart in Streamlit
-    st.markdown('<h3 class="custom-subheader">Top 15 Client Premium by Channel</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">Top 15 Client Sales by Channel</h3>', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
 
     with st.expander("Client Premium by Channel"):
@@ -794,7 +794,7 @@ if not filtered_df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Monthly Premium by Channel</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Monthly Sales by Channel</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
     # Group by Start Date Month and Intermediary and sum the Total lives
@@ -862,7 +862,7 @@ if not filtered_df.empty:
 
 
     # summary table
-    st.markdown('<h3 class="custom-subheader">Month-Wise Premium By Client Segment Table</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">Month-Wise Sales By Channel Table</h3>', unsafe_allow_html=True)
 
     with st.expander("Summary_Table"):
 

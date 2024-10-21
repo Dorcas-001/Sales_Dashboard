@@ -229,7 +229,7 @@ if product:
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
-    filter_description = "All df"
+    filter_description = "All data"
 
 
 
@@ -328,30 +328,30 @@ if not filtered_df.empty:
             """, unsafe_allow_html=True)
         
 
-    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For All Sales</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
 
     # Display metrics
-    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col2, "Total Health Premium", f"RWF {total_health:.0f} M")
-    display_metric(col3, "Total ProActiv Premium", f"RWF {total_pro:.0f} M")
+    display_metric(col1, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Health Sales", f"RWF {total_health:.0f} M")
+    display_metric(col3, "Total ProActiv Sales", f"RWF {total_pro:.0f} M")
 
-    st.markdown('<h3 class="custom-subheader">For Health Insurance Premium by Client Segment</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For Health Insurance Sales by Client Segment</h3>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
 
-    display_metric(col1, "Total Health Whales Premium", value=f"RWF {total_whales_health:.0f} M")
-    display_metric(col2, "Total Health Elephants Premium", value=f"RWF {total_elephants_health:.0f} M")
-    display_metric(col3, "Total Health Tigers Premium", value=f"RWF {total_tigers_health:.0f} M")
-    display_metric(col4, "Total Health Hares Premium", value=f"RWF {total_hares_health:.0f} M")
+    display_metric(col1, "Total Health Whales Sales", value=f"RWF {total_whales_health:.0f} M")
+    display_metric(col2, "Total Health Elephants Sales", value=f"RWF {total_elephants_health:.0f} M")
+    display_metric(col3, "Total Health Tigers Sales", value=f"RWF {total_tigers_health:.0f} M")
+    display_metric(col4, "Total Health Hares Sales", value=f"RWF {total_hares_health:.0f} M")
 
 
-    st.markdown('<h3 class="custom-subheader">For ProActiv Premium by Client Segment</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For ProActiv Sales by Client Segment</h3>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
 
-    display_metric(col1, "Total ProActiv Whales Premium", value=f"RWF {total_whales_pro:.0f} M")
-    display_metric(col2, "Total ProActiv Elephants Premium", value=f"RWF {total_elephants_pro:.0f} M")
-    display_metric(col3, "Total ProActiv Tigers Premium", value=f"RWF {total_tigers_pro:.0f} M")
-    display_metric(col4, "Total ProActiv Hares Premium", value=f"RWF {total_hares_pro:.0f} M")
+    display_metric(col1, "Total ProActiv Whales Sales", value=f"RWF {total_whales_pro:.0f} M")
+    display_metric(col2, "Total ProActiv Elephants Sales", value=f"RWF {total_elephants_pro:.0f} M")
+    display_metric(col3, "Total ProActiv Tigers Sales", value=f"RWF {total_tigers_pro:.0f} M")
+    display_metric(col4, "Total ProActiv Hares Sales", value=f"RWF {total_hares_pro:.0f} M")
 
    
     # Sidebar styling and logo
@@ -460,7 +460,7 @@ if not filtered_df.empty:
         ax1.yaxis.set_major_formatter(formatter)
 
             # Set chart title
-        st.markdown('<h3 class="custom-subheader">Total Premium by Client Segment Over Time</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales by Client Segment Over Time</h3>', unsafe_allow_html=True)
 
             # Display the chart in Streamlit
         st.pyplot(fig1)
@@ -499,7 +499,7 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Average Insured Premium Yearly by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Average Yearly Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_yearly_avg_premium, use_container_width=True)
 
 
@@ -543,13 +543,13 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Interquartile Range of Total Premium by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Interquartile Range of Total Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_iqr, use_container_width=True)
 
 
     ccl1, ccl2 = st.columns(2)
     with ccl1:
-        with st.expander("Yearly Average Insured Premium by Client Segment"):
+        with st.expander("Yearly Average Sales by Client Segment"):
             st.dataframe(yearly_avg_premium.style.format(precision=2))
         
     # Function to find the closest client to a given value
@@ -639,7 +639,7 @@ if not filtered_df.empty:
         )
 
         # Display the Total Premium chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Total Premium Monthly by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Monthly Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig_monthly_premium, use_container_width=True)
 
     with cls2:
@@ -708,7 +708,7 @@ if not filtered_df.empty:
 
     with cul1:
         # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Premium by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales by Client Segment</h3>', unsafe_allow_html=True)
 
 
         # Create a donut chart
@@ -759,7 +759,7 @@ if not filtered_df.empty:
             )
 
             # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Top 15 Client Premium by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Top 15 Client Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     culs1, culs2 = st.columns(2)
@@ -771,7 +771,7 @@ if not filtered_df.empty:
         with st.expander("Total Premium by Client Segment"):
             st.dataframe(int_premiums.style.format(precision=2))
     # summary table
-    st.markdown('<h3 class="custom-subheader">Month-Wise Insured Premium By Client Segment Table</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">Month-Wise Sales By Client Segment Table</h3>', unsafe_allow_html=True)
 
     with st.expander("Summary_Table"):
 

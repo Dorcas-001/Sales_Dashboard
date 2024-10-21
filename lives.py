@@ -222,7 +222,7 @@ if product:
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
-    filter_description = "All df"
+    filter_description = "All data"
 
 
 filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
@@ -315,11 +315,11 @@ if not filtered_df.empty:
     st.markdown('<h3 class="custom-subheader">Overall</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
 
-    display_metric(col1, "Total Premium", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col1, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col2, "Total Lives", total_lives)
     display_metric(col3, "Total Principal Members", total_mem)
     display_metric(col1, "Total Dependents", total_dependents)
-    display_metric(col2, "Premium Per Principal Member", f"RWF {average_pre_scaled:.1f} M")
+    display_metric(col2, "Average Sale Per Principal Member", f"RWF {average_pre_scaled:.1f} M")
     display_metric(col3, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
 
     st.markdown('<h3 class="custom-subheader">For Health Insurance Lives Covered</h3>', unsafe_allow_html=True)

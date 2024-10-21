@@ -87,7 +87,6 @@ df4['Start Year'] = 2024
 
 
 
-
 df = pd.concat([df0, df1, df4])
 
 
@@ -185,7 +184,6 @@ with col2:
     date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
 
 # Filter DataFrame based on the selected dates
-df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
 
 
 
@@ -212,12 +210,11 @@ channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique(
 channel_name = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
 
-# Filtered DataFrame
-filtered_df = df
+
 
 
 # Create a 'Month-Year' column
-filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Year'].astype(str)
+df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
 
 
 # Function to sort month-year combinations
@@ -226,7 +223,7 @@ def sort_key(month_year):
     return (int(year), month_order[month])
 
 # Extract unique month-year combinations and sort them
-month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
+month_years = sorted(df['Month-Year'].unique(), key=sort_key)
 
 # Select slider for month-year range
 selected_month_year_range = st.select_slider(
@@ -244,32 +241,29 @@ start_index = (int(start_year), month_order[start_month])
 end_index = (int(end_year), month_order[end_month])
 
 # Filter DataFrame based on month-year order indices
-filtered_df = filtered_df[
-    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+df = df[
+    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
 ]
 
 
 
-
 # Apply filters to the DataFrame
-if year:
-    filtered_df = filtered_df[filtered_df['Start Year'].isin(year)]
-if month:
-    filtered_df = filtered_df[filtered_df['Start Month'].isin(month)]
-if product:
-    filtered_df = filtered_df[filtered_df['Product_name'].isin(product)]
-if channel:
-    filtered_df = filtered_df[filtered_df['Channel'].isin(channel)]
-if channel_name:
-    filtered_df = filtered_df[filtered_df['Channel'].isin(channel_name)]
-if segment:
-    filtered_df = filtered_df[filtered_df['Client Segment'].isin(segment)]
-if cover:
-    filtered_df = filtered_df[filtered_df['Cover Type'].isin(cover)]
-if client_name:
-    filtered_df = filtered_df[filtered_df['Client Name'].isin(client_name)]
-
-
+if 'Start Year' in df.columns and year:
+    df = df[df['Start Year'].isin(year)]
+if 'Start Month' in df.columns and month:
+    df = df[df['Start Month'].isin(month)]
+if 'Product_name' in df.columns and product:
+    df = df[df['Product_name'].isin(product)]
+if 'Channel' in df.columns and channel:
+    df = df[df['Channel'].isin(channel)]
+if 'Channel' in df.columns and channel_name:
+    df = df[df['Channel'].isin(channel_name)]
+if 'Client Segment' in df.columns and segment:
+    df = df[df['Client Segment'].isin(segment)]
+if 'Cover Type' in df.columns and cover:
+    df = df[df['Cover Type'].isin(cover)]
+if 'Client Name' in df.columns and client_name:
+    df = df[df['Client Name'].isin(client_name)]
 
 # Determine the filter description
 filter_description = ""
@@ -282,16 +276,18 @@ if month:
 if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
-    filter_description = "All df"
+    filter_description = "All data"
+
+
 
 df_2024 = df[df['Start Date'].dt.year == 2024]
 
     # Filter the concatenated DataFrame to include only endorsements
-df_endorsements_only = filtered_df[(filtered_df['Type'] == 'Endorsement')]
-df_new = filtered_df[filtered_df['Cover Type'] == 'New Insured']
-df_renew = filtered_df[filtered_df['Cover Type'] == 'Renew/Insured']
-df_proactiv = filtered_df[filtered_df['Product_name'] == 'ProActiv']
-df_health = filtered_df[filtered_df['Product_name'] == 'Health']
+df_endorsements_only = df[(df['Type'] == 'Endorsement')]
+df_new = df[df['Cover Type'] == 'New Insured']
+df_renew = df[df['Cover Type'] == 'Renew/Insured']
+df_proactiv = df[df['Product_name'] == 'ProActiv']
+df_health = df[df['Product_name'] == 'Health']
 
 df_renew_2024 = df_2024[df_2024['Cover Type'] == 'Renew/Insured']
 df_proactiv_2024 = df_2024[df_2024['Product_name'] == 'ProActiv']
@@ -304,21 +300,20 @@ df_proactiv_renew = df_proactiv[df_proactiv['Cover Type'] == 'Renew/Insured']
 df_health_new = df_health[df_health['Cover Type'] == 'New Insured']
 df_health_renew = df_health[df_health['Cover Type'] == 'Renew/Insured']
 
-df_proactiv_target = filtered_df[filtered_df['Product'] == 'ProActiv']
-df_health_target = filtered_df[filtered_df['Product'] == 'Health']
-df_renewals = filtered_df[filtered_df['Product'] == 'Renewals']
+df_proactiv_target = df[df['Product'] == 'ProActiv']
+df_health_target = df[df['Product'] == 'Health']
+df_renewals = df[df['Product'] == 'Renewals']
 
 
 
-
-if not filtered_df.empty:
+if not df.empty:
 
 # Calculate the total premium for endorsements only
 
     scale=1_000_000  # For millions
 
-    total_pre = filtered_df["Total Premium"].sum()
-    total_in_pre = filtered_df["Total Premium"].sum()
+    total_pre = df["Total Premium"].sum()
+    total_in_pre = df["Total Premium"].sum()
     # Scale the sums
     total_pre_scaled = total_pre / scale
     total_in_pre_scaled = total_in_pre / scale
@@ -336,19 +331,15 @@ if not filtered_df.empty:
     total_health_renew = (df_health_renew['Total Premium'].sum()) / scale
 
     # Calculate total premiums for specific combinations
-    total_renewals = (df_renewals['Total Premium'].sum())/scale
-    total_pro_target = (df_proactiv_target['Total Premium'].sum())/scale
-    total_health_target = (df_health_target['Total Premium'].sum())/scale
+    total_renewals = (df_renewals['Target'].sum())/scale
+    total_pro_target = (df_proactiv_target['Target'].sum())/scale
+    total_health_target = (df_health_target['Target'].sum())/scale
 
 
     # Calculate total premiums for specific combinations
     total_renew_2024 = (df_renew_2024['Total Premium'].sum())/scale
     total_pro_2024 = (df_proactiv_2024['Total Premium'].sum())/scale
     total_health_2024 = (df_health_2024['Total Premium'].sum())/scale
-
-    # Calculate metrics
-    scaling_factor = 1_000_000  # For millions
-
 
 
     health_variance = (total_health_2024-total_health_target)
@@ -360,18 +351,17 @@ if not filtered_df.empty:
     renew_variance = total_renew_2024-total_renewals
     renew_percent_var = (renew_variance/total_renewals) *100
 
-    filtered_df["Total Premium"] = pd.to_numeric(filtered_df["Total Premium"], errors='coerce').fillna(0).astype(int)
-    filtered_df["No. of staffs"] = pd.to_numeric(filtered_df["No. of staffs"], errors='coerce').fillna(0).astype(int)
-    filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
+    df["No. of staffs"] = pd.to_numeric(df["No. of staffs"], errors='coerce').fillna(0).astype(int)
+    df["Dependents"] = pd.to_numeric(df["Dependents"], errors='coerce').fillna(0).astype(int)
 
-    total_clients = filtered_df["Client Name"].nunique()
-    total_pre = filtered_df["Basic Premium"].sum()
-    total_in_pre = filtered_df["Total Premium"].sum()
-    total_lives = filtered_df["Total lives"].sum()
-    total_mem = filtered_df["No. of staffs"].sum()
-    total_dependents = filtered_df["Dependents"].sum()
+    total_clients = df["Client Name"].nunique()
+    total_pre = df["Basic Premium"].sum()
+    total_in_pre = df["Total Premium"].sum()
+    total_lives = df["Total lives"].sum()
+    total_mem = df["No. of staffs"].sum()
+    total_dependents = df["Dependents"].sum()
     average_dep = total_mem/total_dependents
-    average_pre = filtered_df["Total Premium"].mean()
+    average_pre = df["Total Premium"].mean()
     average_premium_per_life = total_in_pre/total_mem
     gwp_average = total_lives * average_premium_per_life / total_clients
 
@@ -384,11 +374,11 @@ if not filtered_df.empty:
     average_pre_scaled = average_pre/scaling_factor
     gwp_average_scaled = gwp_average/scaling_factor
 
-    scale = 1_000
+    scaled = 1_000
 
     # Calculate key metrics
-    lowest_premium = filtered_df['Total Premium'].min() / scale
-    highest_premium = filtered_df['Total Premium'].max() / scaling_factor
+    lowest_premium = df['Total Premium'].min() /scaled
+    highest_premium = df['Total Premium'].max() / scaling_factor
 
     # Create 4-column layout for metric cards# Define CSS for the styled boxes and tooltips
     st.markdown("""
@@ -436,31 +426,31 @@ if not filtered_df.empty:
             """, unsafe_allow_html=True)
 
 
-    st.markdown('<h3 class="custom-subheader">For Health Insurance Gross Written Premium or ProActiv Premium</h3>', unsafe_allow_html=True)    
+    st.markdown('<h3 class="custom-subheader">For Health Insurance or ProActiv Sales</h3>', unsafe_allow_html=True)    
 
 
     # Display metrics
     col1, col2, col3= st.columns(3)
-    display_metric(col1, "Total Clients", total_clients)
-    display_metric(col2, "Total Sales", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col1, f"Total Clients ({filter_description.strip()})", total_clients)
+    display_metric(col2, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col3, "Total Principal Members", total_mem)
 
-    display_metric(col1, "Average Premium Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
-    display_metric(col2, "Total Endorsements", f"RWF {total_endorsement_premium:.0f} M")
-    display_metric(col3, "Average GWP per Employer group", f"RWF {gwp_average_scaled:.0f} M")
+    display_metric(col1, "Average Sale Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
+    display_metric(col2, "Total Endorsement Sales", f"RWF {total_endorsement_premium:.0f} M")
+    display_metric(col3, "Average Sale per Employer group", f"RWF {gwp_average_scaled:.0f} M")
 
-    display_metric(col1, "Lowest Sales per Employer group", f"RWF {lowest_premium:.0f} K")
-    display_metric(col2, "Highest Sales per Employer group", f"RWF {highest_premium:.0f} M",)
+    display_metric(col1, "Lowest Sale per Employer group", f"RWF {lowest_premium:.0f} K")
+    display_metric(col2, "Highest Sale per Employer group", f"RWF {highest_premium:.0f} M",)
 
 
-    grouped = filtered_df.groupby('Client Name')['Total lives'].median().reset_index()
+    grouped = df.groupby('Client Name')['Total lives'].median().reset_index()
     grouped.columns = ['Client Name', 'Median lives']
     # Calculate key metrics
     st.markdown('<h2 class="custom-subheader">For Lives Covered</h2>', unsafe_allow_html=True)    
 
     cols1,cols2, cols3, cols4 = st.columns(4)
 
-    display_metric(cols1, "Total Lives", total_lives)
+    display_metric(cols1, "Total Lives", f"{total_lives:.0f}")
     display_metric(cols2, "Total Principal Members", total_mem)
     display_metric(cols3, "Total Dependents", total_dependents)
     display_metric(cols4, "Average Dependents Per Principal Member", f"{average_dep:.0f}")
@@ -470,14 +460,14 @@ if not filtered_df.empty:
     col1, col2, col3 = st.columns(3)
     display_metric(col1, "Total Health Sales", value=f"RWF {total_health:.0f} M")
     display_metric(col2, "Total New Health Sales", value=f"RWF {total_health_new:.0f} M")
-    display_metric(col3, "Total Health Renewals", value=f"RWF {total_health_renew:.0f} M")
+    display_metric(col3, "Total Health Renewal Sales", value=f"RWF {total_health_renew:.0f} M")
 
-    st.markdown('<h2 class="custom-subheader">For ProActiv Premium</h2>', unsafe_allow_html=True) 
+    st.markdown('<h2 class="custom-subheader">For ProActiv Sales</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
     display_metric(col1, "Total ProActiv Sales", value=f"RWF {total_pro:.0f} M")
     display_metric(col2, "Total New ProActiv Sales", value=f"RWF {total_proactiv_new:.0f} M")
-    display_metric(col3, "Total ProActiv Renewals", value=f"RWF {total_proactiv_renew:.0f} M")
+    display_metric(col3, "Total ProActiv Renewal Sales", value=f"RWF {total_proactiv_renew:.0f} M")
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
@@ -500,7 +490,7 @@ if not filtered_df.empty:
     st.markdown('<h2 class="custom-subheader">For Renewals Target</h2>', unsafe_allow_html=True) 
     col1, col2, col3= st.columns(3)
 
-    display_metric(col1, "2024 Target Renewals", f"RWF {total_renewals_ytd:.0f} M")
+    display_metric(col1, "2024 Target Renewal Sales", f"RWF {total_renewals_ytd:.0f} M")
     display_metric(col2, "YTD Renewal Target Sales", f"RWF {total_renewals:.0f} M")
     display_metric(col3, "YTD Actual Renewed Sales", f"RWF {total_renew_2024:.0f} M")
     display_metric(col1, "Variance", f"RWF {renew_variance:.0f} M")

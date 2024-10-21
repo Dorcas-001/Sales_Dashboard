@@ -178,6 +178,18 @@ if owner:
     df = df[df['Owner'].isin(owner)]
 if client_name:
     df = df[df['Client Name'].isin(client_name)]
+# Apply filters to the DataFrame
+
+if 'Start Month' in df.columns and month:
+    df = df[df['Start Month'].isin(month)]
+if 'Product_name' in df.columns and product:
+    df = df[df['Product_name'].isin(product)]
+if 'Cover Type' in df.columns and cover:
+    df = df[df['Cover Type'].isin(cover)]
+if 'Owner' in df.columns and owner:
+    df = df[df['Owner'].isin(owner)]
+if 'Client Name' in df.columns and client_name:
+    df = df[df['Client Name'].isin(client_name)]
 
 
 # Determine the filter description
@@ -283,9 +295,9 @@ if not df.empty:
     total_health_renew = (df_health_renew['Total Premium'].sum()) / scale
 
     # Calculate total premiums for specific combinations
-    total_renewals = (df_renewals['Total Premium'].sum())/scale
-    total_pro_target = (df_proactiv_target['Total Premium'].sum())/scale
-    total_health_target = (df_health_target['Total Premium'].sum())/scale
+    total_renewals = (df_renewals['Target'].sum())/scale
+    total_pro_target = (df_proactiv_target['Target'].sum())/scale
+    total_health_target = (df_health_target['Target'].sum())/scale
 
 
     # Calculate total premiums for specific combinations
@@ -350,13 +362,13 @@ if not df.empty:
             """, unsafe_allow_html=True)
 
 
-    st.markdown('<h3 class="custom-subheader">For Health Insurance Gross Written Premium or ProActiv Premium</h3>', unsafe_allow_html=True)    
+    st.markdown('<h3 class="custom-subheader">For Health Insurance or ProActiv Sales</h3>', unsafe_allow_html=True)    
 
 
     # Display metrics
     col1, col2 = st.columns(2)
-    display_metric(col1, "Total Sales", f"RWF {total_in_pre_scaled:.0f} M")
-    display_metric(col2, "Total Endorsements", f"RWF {total_endorsement_premium:.0f} M")
+    display_metric(col1, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
+    display_metric(col2, "Total Endorsement Sales", f"RWF {total_endorsement_premium:.0f} M")
 
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 
