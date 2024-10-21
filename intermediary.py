@@ -329,7 +329,7 @@ if not filtered_df.empty:
             </div>
             """, unsafe_allow_html=True)
         
-    st.markdown('<h3 class="custom-subheader">For Total Premiums</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="custom-subheader">For All Sales</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
 
     # Display metrics

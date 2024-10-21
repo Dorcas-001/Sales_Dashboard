@@ -607,7 +607,6 @@ if not df.empty:
 
         # Set layout for the chart
         fig_premium_by_intermediary.update_layout(
-            xaxis_title="Cover Type",
             yaxis=dict(
                 title="Total Premium",
                 titlefont=dict(color="#009DAE"),

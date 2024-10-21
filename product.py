@@ -325,8 +325,8 @@ if not df.empty:
     # Display metrics
     display_metric(col1, f"Total Sales ({filter_description.strip()})", value=f"RWF {total_pre_scaled:.0f} M")
     display_metric(col2, "Total Endorsement Sales", f"RWF {total_endorsement_premium:.0f} M")
-    display_metric(col3, "Total Health Sales", value=f"RWF {total_health:.0f} M")
-    display_metric(col4, "Total New Sales", value=f"RWF {total_new:.0f} M")
+    display_metric(col3, "Total New Sales", value=f"RWF {total_new:.0f} M")
+    display_metric(col4, "Total Renewal Sales", value=f"RWF {total_renew:.0f} M")
 
     st.markdown('<h3 class="custom-subheader">For Health Insurance</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
@@ -642,7 +642,6 @@ if not df.empty:
 
         # Set layout for the chart
         fig_premium_by_intermediary.update_layout(
-            xaxis_title="Cover Type",
             yaxis=dict(
                 title="Total Premium",
                 titlefont=dict(color="#009DAE"),
