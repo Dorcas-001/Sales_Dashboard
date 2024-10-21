@@ -347,7 +347,7 @@ if not df.empty:
         }
         .metric-value {
             color: #009DAE;
-            font-size: 1.5em;
+            font-size: 1.2em;
         }
         </style>
         """, unsafe_allow_html=True)
