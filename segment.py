@@ -701,23 +701,30 @@ if not filtered_df.empty:
 
     cul1, cul2 = st.columns(2)
 
- # Calculate the Total Premium by Client Segment
+    # Define custom colors for each Client Segment
+    color_mapping = {
+        "Elephants": "#006E7F",  # Blue
+        "Hares": "#e66c37",      # Orange
+        "Tigers": "#461b09",     # Green
+        "Whales": "#f8a785"      # Red
+    }
+
+    # Calculate the Total Premium by Client Segment
     int_premiums = filtered_df.groupby("Client Segment")["Total Premium"].sum().reset_index()
     int_premiums.columns = ["Client Segment", "Total Premium"]    
 
     with cul1:
         # Display the header
-        st.markdown('<h3 class="custom-subheader">Total Sales by Client Segment</h3>', unsafe_allow_html=True)
-
+        st.markdown('<h3>Total Sales by Client Segment</h3>', unsafe_allow_html=True)
 
         # Create a donut chart
-        fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
+        fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark",
+                    color_discrete_map=color_mapping)
         fig.update_traces(textposition='inside', textinfo='value+percent')
         fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
 
         # Display the chart in Streamlit
         st.plotly_chart(fig, use_container_width=True)
-
 
     # Group by Client Name and Client Segment, then sum the Total Premium
     df_grouped = filtered_df.groupby(['Client Name', 'Client Segment'])['Total Premium'].sum().reset_index()
@@ -734,31 +741,30 @@ if not filtered_df.empty:
         # Create the bar chart
         fig = go.Figure()
 
-
-            # Add bars for each Client Segment
+        # Add bars for each Client Segment
         for idx, Client_Segment in enumerate(client_df['Client Segment'].unique()):
-                Client_Segment_data = client_df[client_df['Client Segment'] == Client_Segment]
-                fig.add_trace(go.Bar(
-                    x=Client_Segment_data['Client Name'],
-                    y=Client_Segment_data['Total Premium'],
-                    name=Client_Segment,
-                    text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total Premium']],
-                    textposition='auto',
-                    marker_color=custom_colors[idx % len(custom_colors)]  # Cycle through custom colors
-                ))
+            Client_Segment_data = client_df[client_df['Client Segment'] == Client_Segment]
+            fig.add_trace(go.Bar(
+                x=Client_Segment_data['Client Name'],
+                y=Client_Segment_data['Total Premium'],
+                name=Client_Segment,
+                text=[f'{value/1e6:.0f}M' for value in Client_Segment_data['Total Premium']],
+                textposition='auto',
+                marker_color=color_mapping[Client_Segment]  # Use the color mapping
+            ))
 
         fig.update_layout(
-                barmode='stack',
-                yaxis_title="Total Premium",
-                xaxis_title="Client Name",
-                font=dict(color='Black'),
-                xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
-                margin=dict(l=0, r=0, t=30, b=50)
-            )
+            barmode='stack',
+            yaxis_title="Total Premium",
+            xaxis_title="Client Name",
+            font=dict(color='Black'),
+            xaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            yaxis=dict(title_font=dict(size=14), tickfont=dict(size=12)),
+            margin=dict(l=0, r=0, t=30, b=50)
+        )
 
-            # Display the chart in Streamlit
-        st.markdown('<h3 class="custom-subheader">Top 15 Client Sales by Client Segment</h3>', unsafe_allow_html=True)
+        # Display the chart in Streamlit
+        st.markdown('<h3>Top 15 Client Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     culs1, culs2 = st.columns(2)
