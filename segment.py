@@ -715,7 +715,7 @@ if not filtered_df.empty:
 
     with cul1:
         # Display the header
-        st.markdown('<h3>Total Sales by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Total Sales by Client Segment</h3>', unsafe_allow_html=True)
 
         # Create a donut chart
         fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark",)
@@ -765,7 +765,7 @@ if not filtered_df.empty:
         )
 
         # Display the chart in Streamlit
-        st.markdown('<h3>Top 15 Client Sales by Client Segment</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 class="custom-subheader">Top 15 Client Sales by Client Segment</h3>', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
 
     culs1, culs2 = st.columns(2)
