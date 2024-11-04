@@ -718,8 +718,9 @@ if not filtered_df.empty:
         st.markdown('<h3>Total Sales by Client Segment</h3>', unsafe_allow_html=True)
 
         # Create a donut chart
-        fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark",
-                    color_discrete_map=color_mapping)
+        fig = px.pie(int_premiums, names="Client Segment", values="Total Premium", hole=0.5, template="plotly_dark",)
+        fig.update_traces(marker=dict(colors=[color_mapping.get(segment, "#000000") for segment in int_premiums["Client Segment"]]))
+
         fig.update_traces(textposition='inside', textinfo='value+percent')
         fig.update_layout(height=450, margin=dict(l=0, r=10, t=30, b=50))
 
