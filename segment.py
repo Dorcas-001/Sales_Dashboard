@@ -592,7 +592,6 @@ if not filtered_df.empty:
     monthly_lives = filtered_df.groupby(['Start Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
     # Define custom colors
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
 
     # Create the layout columns
     cls1, cls2 = st.columns(2)
