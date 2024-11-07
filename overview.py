@@ -50,40 +50,6 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
 
      # Calculate metrics
-scaling_factor = 1_000_000
-
-target_2024 = (df4["Target"].sum())/scaling_factor
-df_proactiv_target_2024 = df4[df4['Product'] == 'ProActiv']
-df_health_target_2024 = df4[df4['Product'] == 'Health']
-df_renewals_2024 = df4[df4['Product'] == 'Renewals']
-
-    # Calculate total premiums for specific combinations
-total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
-total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
-total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
-
-
-df4['Target'] = df4['Target'] * (9 / 12)
-
-df4['Target'] = df4['Target'] / 9
-
-# Add a 'Month' column for filtering
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
-
-# Create a DataFrame for each month from January to September
-expanded_rows = []
-for _, row in df4.iterrows():
-    for month in months:
-        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
-
-# Create the expanded DataFrame
-df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
-
-
-
-df4 = pd.concat([df4]*9, ignore_index=True)
-df4['Start Month'] = months * (len(df4) // len(months))
-df4['Start Year'] = 2024
 
 
 
@@ -194,7 +160,6 @@ month_order = {
     "September": 9, "October": 10, "November": 11, "December": 12
 }
 
-df['Start Year'] = pd.to_numeric(df['Start Year'], errors='coerce').dropna().astype(int)
 # Sort months based on their order
 sorted_months = sorted(df['Start Month'].dropna().unique(), key=lambda x: month_order[x])
 
@@ -209,41 +174,6 @@ segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Seg
 channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
 channel_name = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
-
-
-
-
-# Create a 'Month-Year' column
-df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
-
-
-# Function to sort month-year combinations
-def sort_key(month_year):
-    month, year = month_year.split()
-    return (int(year), month_order[month])
-
-# Extract unique month-year combinations and sort them
-month_years = sorted(df['Month-Year'].unique(), key=sort_key)
-
-# Select slider for month-year range
-selected_month_year_range = st.select_slider(
-    "Select Month-Year Range",
-    options=month_years,
-    value=(month_years[0], month_years[-1])
-)
-
-# Filter DataFrame based on selected month-year range
-start_month_year, end_month_year = selected_month_year_range
-start_month, start_year = start_month_year.split()
-end_month, end_year = end_month_year.split()
-
-start_index = (int(start_year), month_order[start_month])
-end_index = (int(end_year), month_order[end_month])
-
-# Filter DataFrame based on month-year order indices
-df = df[
-    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
-]
 
 
 
@@ -278,9 +208,80 @@ if client_name:
 if not filter_description:
     filter_description = "All data"
 
+df = df[df["Start Year"] == 2024]
+df
+# Calculate metrics
+scaling_factor = 1_000_000
+
+target_2024 = df["Target"].sum() / scaling_factor
+df_proactiv_target_2024 = df[df['Product'] == 'ProActiv']
+df_health_target_2024 = df[df['Product'] == 'Health']
+df_renewals_2024 = df[df['Product'] == 'Renewals']
+
+# Calculate Basic Premium RWFs for specific combinations
+total_renewals_ytd = df_renewals_2024['Target'].sum() / scaling_factor
+total_pro_target_ytd = df_proactiv_target_2024['Target'].sum() / scaling_factor
+total_health_target_ytd = df_health_target_2024['Target'].sum() / scaling_factor
+
+# Adjust the 'Target' column
+df['Target'] = df['Target'] * (10 / 12)
+
+# Add a 'Month' column for filtering
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']
+num_months = len(months)
+
+# Create a new DataFrame to hold the replicated data
+df_replicated = pd.DataFrame()
+
+# Replicate the dataset for each month
+for month in months:
+    df_month = df.copy()
+    df_month['Month'] = month
+    df_replicated = pd.concat([df_replicated, df_month], ignore_index=True)
+
+# Adjust the 'Target' column by dividing by the number of months
+df_replicated['Target'] = df_replicated['Target'] / num_months
 
 
-df_2024 = df[df['Start Date'].dt.year == 2024]
+# Handle non-finite values in 'Start Year' column
+df['Start Year'] = df['Start Year'].fillna(0).astype(int)  # Replace NaN with 0 or any specific value
+
+# Handle non-finite values in 'Start Month' column
+df['Start Month'] = df['Start Month'].fillna('Unknown')
+
+# Create a 'Month-Year' column
+df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
+
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order.get(month, 0))  # Use .get() to handle 'Unknown' month
+
+# Extract unique month-year combinations and sort them
+month_years = sorted(df['Month-Year'].unique(), key=sort_key)
+
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
+)
+
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
+
+start_index = (int(start_year), month_order.get(start_month, 0))
+end_index = (int(end_year), month_order.get(end_month, 0))
+
+# Filter DataFrame based on month-year order indices
+df = df[
+    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order.get(x.split()[0], 0))).between(start_index, end_index)
+]
+
+
+
 
     # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = df[(df['Type'] == 'Endorsement')]
@@ -289,9 +290,9 @@ df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
 
-df_renew_2024 = df_2024[df_2024['Cover Type'] == 'Renew/Insured']
-df_proactiv_2024 = df_2024[df_2024['Product_name'] == 'ProActiv']
-df_health_2024 = df_2024[df_2024['Product_name'] == 'Health']
+df_renew_2024 = df[df['Cover Type'] == 'Renew/Insured']
+df_proactiv_2024 = df[df['Product_name'] == 'ProActiv']
+df_health_2024 = df[df['Product_name'] == 'Health']
 
 # Further filter by Cover Type within each product
 df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']

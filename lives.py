@@ -383,6 +383,7 @@ if not filtered_df.empty:
                 
         </style>
         """, unsafe_allow_html=True)
+    custom_colors = ["#006E7F", "#e66c37", "#461b09","#009DAE", "#f8a785", "#CC3636","#C6E7FF","#FFB38E" , "#E4E0E1"]
 
     cul1, cul2 =st.columns(2)
 # Group by day and intermediary, then sum the Total Premium
@@ -391,7 +392,6 @@ if not filtered_df.empty:
     # Sort by the START DATE
     area_chart_total_insured = area_chart_total_insured.sort_values("START DATE")
 
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8"]
     with cul1:
         # Set the figure size to a height of 450
         fig1, ax1 = plt.subplots(figsize=(10, 9))  # Adjust the width and height as needed
@@ -612,8 +612,6 @@ if not filtered_df.empty:
     # Group data by "Start Date Month" and "Client Segment" and sum the Total Lives
     monthly_lives_by_segment = df.groupby(['Start Month', 'Client Segment'])['Total lives'].sum().unstack().fillna(0)
 
-    # Define custom colors (you can define more colors if you have more segments)
-    custom_colors = ["#006E7F", "#e66c37", "#B4B4B8", "#f8a785"]
 
     with cls2:
         # Create the stacked bar chart
@@ -693,9 +691,6 @@ if not filtered_df.empty:
         # Display the header
         st.markdown('<h2 class="custom-subheader">Total Lives by Channel</h2>', unsafe_allow_html=True)
 
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
-
         # Create a donut chart
         fig = px.pie(int_premiums, names="Channel", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
         fig.update_traces(textposition='inside', textinfo='value')
@@ -715,8 +710,6 @@ if not filtered_df.empty:
         # Display the header
         st.markdown('<h2 class="custom-subheader">Total Lives by Client Segment</h2>', unsafe_allow_html=True)
 
-        # Define custom colors
-        custom_colors = ["#006E7F", "#e66c37", "#461b09", "#f8a785", "#CC3636"]
 
         # Create a donut chart
         fig = px.pie(int_premiums, names="Client Segment", values="Total lives", hole=0.5, template="plotly_dark", color_discrete_sequence=custom_colors)
