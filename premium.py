@@ -41,55 +41,14 @@ df2=pd.read_excel(filepath, sheet_name=sheet_name2)
 df3=pd.read_excel(filepath, sheet_name=sheet_name3)
 df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 
-
+# Filter rows where the Start Date is in 2024
+df1 = df1[df1['Start Year'] == 2024]
+df0 = df0[df0['Start Year'] == 2024]
 
 
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 df0['Start Date'] = pd.to_datetime(df0['Start Date'], errors='coerce')
-
-scaling_factor = 1_000_000
-
-target_2024 = (df4["Target"].sum())/scaling_factor
-df_proactiv_target_2024 = df4[df4['Product'] == 'ProActiv']
-df_health_target_2024 = df4[df4['Product'] == 'Health']
-df_renewals_2024 = df4[df4['Product'] == 'Renewals']
-
-    # Calculate total premiums for specific combinations
-total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
-total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
-total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
-
-# Filter rows where the Start Date is in 2024
-df1 = df1[df1['Start Date'].dt.year == 2024]
-df0 = df0[df0['Start Date'].dt.year == 2024]
-
-     # Calculate metrics
-
-target_2024 = (df4["Target"].sum())/scaling_factor
-
-df4['Target'] = df4['Target'] * (9 / 12)
-
-df4['Target'] = df4['Target'] / 9
-
-# Add a 'Month' column for filtering
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
-
-# Create a DataFrame for each month from January to September
-expanded_rows = []
-for _, row in df4.iterrows():
-    for month in months:
-        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
-
-# Create the expanded DataFrame
-df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
-
-
-
-df4 = pd.concat([df4]*9, ignore_index=True)
-df4['Start Month'] = months * (len(df4) // len(months))
-df4['Start Year'] = 2024
-
 
 
 
@@ -206,6 +165,47 @@ if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
     filter_description = "All data"
+
+
+scaling_factor = 1_000_000
+
+target_2024 = (df4["Target"].sum())/scaling_factor
+df_proactiv_target_2024 = df4[df4['Product'] == 'ProActiv']
+df_health_target_2024 = df4[df4['Product'] == 'Health']
+df_renewals_2024 = df4[df4['Product'] == 'Renewals']
+
+    # Calculate total premiums for specific combinations
+total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
+total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
+total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
+
+     # Calculate metrics
+
+target_2024 = (df["Target"].sum())/scaling_factor
+
+df['Target'] = df['Target'] * (9 / 12)
+
+df['Target'] = df['Target'] / 9
+
+# Add a 'Month' column for filtering
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
+
+# Create a DataFrame for each month from January to September
+expanded_rows = []
+for _, row in df.iterrows():
+    for month in months:
+        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
+
+# Create the expanded DataFrame
+df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
+
+
+
+df = pd.concat([df]*9, ignore_index=True)
+df['Start Month'] = months * (len(df) // len(months))
+df['Start Year'] = 2024
+
+
 
 
 df['Start Year'] = df['Start Year'].astype(int)
@@ -366,9 +366,10 @@ if not df.empty:
 
 
     # Display metrics
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     display_metric(col1, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col2, "Total Endorsement Sales", f"RWF {total_endorsement_premium:.0f} M")
+    display_metric(col3, "Total Target 2024", f"RWF {target_2024:.0f} M")
 
 
     st.markdown('<h2 class="custom-subheader">For Health Insurance Target</h2>', unsafe_allow_html=True) 

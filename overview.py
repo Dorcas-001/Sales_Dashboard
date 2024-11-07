@@ -48,13 +48,10 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
-
-     # Calculate metrics
-
-
+df1 = df1[df1['Start Year'] == 2024]
+df0 = df0[df0['Start Year'] == 2024]
 
 df = pd.concat([df0, df1, df4])
-
 
 # Sidebar styling and logo
 st.markdown("""
@@ -172,10 +169,9 @@ product = st.sidebar.multiselect("Select Product", options=df['Product_name'].un
 cover = st.sidebar.multiselect("Select Cover Type", options=df['Cover Type'].unique())
 segment = st.sidebar.multiselect("Select Client Segment", options=df['Client Segment'].unique())
 channel = st.sidebar.multiselect("Select Channel", options=df['Channel'].unique())
+team = st.sidebar.multiselect("Select Sales Team", options=df['Owner'].unique())
 channel_name = st.sidebar.multiselect("Select Intermediary name", options=df['Intermediary name'].unique())
 client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Name'].unique())
-
-
 
 # Apply filters to the DataFrame
 if 'Start Year' in df.columns and year:
@@ -186,6 +182,8 @@ if 'Product_name' in df.columns and product:
     df = df[df['Product_name'].isin(product)]
 if 'Channel' in df.columns and channel:
     df = df[df['Channel'].isin(channel)]
+if 'Owner' in df.columns and team:
+    df = df[df['Owner'].isin(team)]
 if 'Channel' in df.columns and channel_name:
     df = df[df['Channel'].isin(channel_name)]
 if 'Client Segment' in df.columns and segment:
@@ -208,46 +206,49 @@ if client_name:
 if not filter_description:
     filter_description = "All data"
 
-df = df[df["Start Year"] == 2024]
-df
-# Calculate metrics
+
+
+     # Calculate metrics
 scaling_factor = 1_000_000
 
-target_2024 = df["Target"].sum() / scaling_factor
+target_2024 = (df["Target"].sum())/scaling_factor
 df_proactiv_target_2024 = df[df['Product'] == 'ProActiv']
 df_health_target_2024 = df[df['Product'] == 'Health']
 df_renewals_2024 = df[df['Product'] == 'Renewals']
 
-# Calculate Basic Premium RWFs for specific combinations
-total_renewals_ytd = df_renewals_2024['Target'].sum() / scaling_factor
-total_pro_target_ytd = df_proactiv_target_2024['Target'].sum() / scaling_factor
-total_health_target_ytd = df_health_target_2024['Target'].sum() / scaling_factor
+    # Calculate total premiums for specific combinations
+total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
+total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
+total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
 
-# Adjust the 'Target' column
-df['Target'] = df['Target'] * (10 / 12)
+
+
+
+df['Target'] = df['Target'] * (9 / 12)
+
+df['Target'] = df['Target'] / 9
 
 # Add a 'Month' column for filtering
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']
-num_months = len(months)
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
 
-# Create a new DataFrame to hold the replicated data
-df_replicated = pd.DataFrame()
+# Create a DataFrame for each month from January to September
+expanded_rows = []
+for _, row in df.iterrows():
+    for month in months:
+        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
 
-# Replicate the dataset for each month
-for month in months:
-    df_month = df.copy()
-    df_month['Month'] = month
-    df_replicated = pd.concat([df_replicated, df_month], ignore_index=True)
-
-# Adjust the 'Target' column by dividing by the number of months
-df_replicated['Target'] = df_replicated['Target'] / num_months
+# Create the expanded DataFrame
+df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
 
 
-# Handle non-finite values in 'Start Year' column
-df['Start Year'] = df['Start Year'].fillna(0).astype(int)  # Replace NaN with 0 or any specific value
 
-# Handle non-finite values in 'Start Month' column
-df['Start Month'] = df['Start Month'].fillna('Unknown')
+df = pd.concat([df]*9, ignore_index=True)
+df['Start Month'] = months * (len(df) // len(months))
+df['Start Year'] = 2024
+
+
+
+df['Start Year'] = df['Start Year'].astype(int)
 
 # Create a 'Month-Year' column
 df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
@@ -255,7 +256,7 @@ df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
 # Function to sort month-year combinations
 def sort_key(month_year):
     month, year = month_year.split()
-    return (int(year), month_order.get(month, 0))  # Use .get() to handle 'Unknown' month
+    return (int(year), month_order[month])
 
 # Extract unique month-year combinations and sort them
 month_years = sorted(df['Month-Year'].unique(), key=sort_key)
@@ -272,15 +273,13 @@ start_month_year, end_month_year = selected_month_year_range
 start_month, start_year = start_month_year.split()
 end_month, end_year = end_month_year.split()
 
-start_index = (int(start_year), month_order.get(start_month, 0))
-end_index = (int(end_year), month_order.get(end_month, 0))
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
 
 # Filter DataFrame based on month-year order indices
 df = df[
-    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order.get(x.split()[0], 0))).between(start_index, end_index)
+    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
 ]
-
-
 
 
     # Filter the concatenated DataFrame to include only endorsements
@@ -335,7 +334,7 @@ if not df.empty:
     total_renewals = (df_renewals['Target'].sum())/scale
     total_pro_target = (df_proactiv_target['Target'].sum())/scale
     total_health_target = (df_health_target['Target'].sum())/scale
-
+    total_health_target
 
     # Calculate total premiums for specific combinations
     total_renew_2024 = (df_renew_2024['Total Premium'].sum())/scale
@@ -435,13 +434,12 @@ if not df.empty:
     display_metric(col1, f"Total Clients ({filter_description.strip()})", total_clients)
     display_metric(col2, f"Total Sales ({filter_description.strip()})", f"RWF {total_in_pre_scaled:.0f} M")
     display_metric(col3, "Total Principal Members", total_mem)
-
     display_metric(col1, "Average Sale Per Principal Member", f"RWF {average_pre_scaled:.0f}M")
     display_metric(col2, "Total Endorsement Sales", f"RWF {total_endorsement_premium:.0f} M")
     display_metric(col3, "Average Sale per Employer group", f"RWF {gwp_average_scaled:.0f} M")
-
     display_metric(col1, "Lowest Sale per Employer group", f"RWF {lowest_premium:.0f} K")
     display_metric(col2, "Highest Sale per Employer group", f"RWF {highest_premium:.0f} M",)
+    display_metric(col3, "Total Target 2024", f"RWF {target_2024:.0f} M")
 
 
     grouped = df.groupby('Client Name')['Total lives'].median().reset_index()
