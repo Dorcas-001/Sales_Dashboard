@@ -169,10 +169,10 @@ if not filter_description:
 
 scaling_factor = 1_000_000
 
-target_2024 = (df4["Target"].sum())/scaling_factor
-df_proactiv_target_2024 = df4[df4['Product'] == 'ProActiv']
-df_health_target_2024 = df4[df4['Product'] == 'Health']
-df_renewals_2024 = df4[df4['Product'] == 'Renewals']
+target_2024 = (df["Target"].sum())/scaling_factor
+df_proactiv_target_2024 = df[df['Product'] == 'ProActiv']
+df_health_target_2024 = df[df['Product'] == 'Health']
+df_renewals_2024 = df[df['Product'] == 'Renewals']
 
     # Calculate total premiums for specific combinations
 total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
@@ -181,30 +181,39 @@ total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
 
      # Calculate metrics
 
-target_2024 = (df["Target"].sum())/scaling_factor
 
+     # Calculate metrics
+scaling_factor = 1_000_000
+
+target_2024 = (df["Target"].sum())/scaling_factor
+df_proactiv_target_2024 = df[df['Product'] == 'ProActiv']
+df_health_target_2024 = df[df['Product'] == 'Health']
+df_renewals_2024 = df[df['Product'] == 'Renewals']
+
+    # Calculate total premiums for specific combinations
+total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
+total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
+total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
+
+# Adjust the 'Target' column
 df['Target'] = df['Target'] * (9 / 12)
 
-df['Target'] = df['Target'] / 9
-
 # Add a 'Month' column for filtering
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September']
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']
+num_months = len(months)
 
-# Create a DataFrame for each month from January to September
-expanded_rows = []
-for _, row in df.iterrows():
-    for month in months:
-        expanded_rows.append([row['Product'], row['Owner'], month, row['Target']])
+# Create a new DataFrame to hold the replicated data
+df_replicated = pd.DataFrame()
 
-# Create the expanded DataFrame
-df_expanded = pd.DataFrame(expanded_rows, columns=['Product', 'Owner', 'Start Month', 'Target'])
+# Replicate the dataset for each month
+for month in months:
+    df_month = df.copy()
+    df_month['Month'] = month
+    df_replicated = pd.concat([df_replicated, df_month], ignore_index=True)
 
 
-
-df = pd.concat([df]*9, ignore_index=True)
-df['Start Month'] = months * (len(df) // len(months))
-df['Start Year'] = 2024
-
+# Adjust the 'Target' column by dividing by the number of months
+df_replicated['Target'] = df_replicated['Target'] / num_months
 
 
 
@@ -212,7 +221,6 @@ df['Start Year'] = df['Start Year'].astype(int)
 
 # Create a 'Month-Year' column
 df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
-
 
 # Function to sort month-year combinations
 def sort_key(month_year):
@@ -243,7 +251,6 @@ df = df[
 ]
 
 
-df_2024 = df[df['Start Date'].dt.year == 2024]
 
     # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = df[(df['Type'] == 'Endorsement')]
@@ -252,9 +259,9 @@ df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
 
-df_renew_2024 = df_2024[df_2024['Cover Type'] == 'Renew/Insured']
-df_proactiv_2024 = df_2024[df_2024['Product_name'] == 'ProActiv']
-df_health_2024 = df_2024[df_2024['Product_name'] == 'Health']
+df_renew_2024 = df[df['Cover Type'] == 'Renew/Insured']
+df_proactiv_2024 = df[df['Product_name'] == 'ProActiv']
+df_health_2024 = df[df['Product_name'] == 'Health']
 
 # Further filter by Cover Type within each product
 df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']
