@@ -179,24 +179,23 @@ total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
 total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
 total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
 
-     # Calculate metrics
 
 
-     # Calculate metrics
+# Calculate metrics
 scaling_factor = 1_000_000
 
-target_2024 = (df["Target"].sum())/scaling_factor
+target_2024 = df["Target"].sum() / scaling_factor
 df_proactiv_target_2024 = df[df['Product'] == 'ProActiv']
 df_health_target_2024 = df[df['Product'] == 'Health']
 df_renewals_2024 = df[df['Product'] == 'Renewals']
 
-    # Calculate total premiums for specific combinations
-total_renewals_ytd = (df_renewals_2024['Target'].sum())/scaling_factor
-total_pro_target_ytd = (df_proactiv_target_2024['Target'].sum())/scaling_factor
-total_health_target_ytd = (df_health_target_2024['Target'].sum())/scaling_factor
+# Calculate Basic Premium RWFs for specific combinations
+total_renewals_ytd = df_renewals_2024['Target'].sum() / scaling_factor
+total_pro_target_ytd = df_proactiv_target_2024['Target'].sum() / scaling_factor
+total_health_target_ytd = df_health_target_2024['Target'].sum() / scaling_factor
 
 # Adjust the 'Target' column
-df['Target'] = df['Target'] * (9 / 12)
+df['Target'] = df['Target'] * (10 / 12)
 
 # Add a 'Month' column for filtering
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']
@@ -211,13 +210,15 @@ for month in months:
     df_month['Month'] = month
     df_replicated = pd.concat([df_replicated, df_month], ignore_index=True)
 
-
 # Adjust the 'Target' column by dividing by the number of months
 df_replicated['Target'] = df_replicated['Target'] / num_months
 
 
+# Handle non-finite values in 'Start Year' column
+df['Start Year'] = df['Start Year'].fillna(0).astype(int)  # Replace NaN with 0 or any specific value
 
-df['Start Year'] = df['Start Year'].astype(int)
+# Handle non-finite values in 'Start Month' column
+df['Start Month'] = df['Start Month'].fillna('Unknown')
 
 # Create a 'Month-Year' column
 df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
@@ -225,7 +226,7 @@ df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
 # Function to sort month-year combinations
 def sort_key(month_year):
     month, year = month_year.split()
-    return (int(year), month_order[month])
+    return (int(year), month_order.get(month, 0))  # Use .get() to handle 'Unknown' month
 
 # Extract unique month-year combinations and sort them
 month_years = sorted(df['Month-Year'].unique(), key=sort_key)
@@ -242,12 +243,12 @@ start_month_year, end_month_year = selected_month_year_range
 start_month, start_year = start_month_year.split()
 end_month, end_year = end_month_year.split()
 
-start_index = (int(start_year), month_order[start_month])
-end_index = (int(end_year), month_order[end_month])
+start_index = (int(start_year), month_order.get(start_month, 0))
+end_index = (int(end_year), month_order.get(end_month, 0))
 
 # Filter DataFrame based on month-year order indices
 df = df[
-    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+    df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order.get(x.split()[0], 0))).between(start_index, end_index)
 ]
 
 
