@@ -48,8 +48,6 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
-df1 = df1[df1['Start Year'] == 2024]
-df0 = df0[df0['Start Year'] == 2024]
 
 
 df = pd.concat([df0, df1, df4])
