@@ -278,7 +278,7 @@ df = df[
     df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order.get(x.split()[0], 0))).between(start_index, end_index)
 ]
 
-
+df_2024 = df[df["Start Year"]==2024]
     # Filter the concatenated DataFrame to include only endorsements
 df_endorsements_only = df[(df['Type'] == 'Endorsement')]
 df_new = df[df['Cover Type'] == 'New Insured']
@@ -286,9 +286,9 @@ df_renew = df[df['Cover Type'] == 'Renew/Insured']
 df_proactiv = df[df['Product_name'] == 'ProActiv']
 df_health = df[df['Product_name'] == 'Health']
 
-df_renew_2024 = df[df['Cover Type'] == 'Renew/Insured']
-df_proactiv_2024 = df[df['Product_name'] == 'ProActiv']
-df_health_2024 = df[df['Product_name'] == 'Health']
+df_renew_2024 = df_2024[df_2024['Cover Type'] == 'Renew/Insured']
+df_proactiv_2024 = df_2024[df_2024['Product_name'] == 'ProActiv']
+df_health_2024 = df_2024[df_2024['Product_name'] == 'Health']
 
 # Further filter by Cover Type within each product
 df_proactiv_new = df_proactiv[df_proactiv['Cover Type'] == 'New Insured']
