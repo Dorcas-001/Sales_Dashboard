@@ -245,7 +245,6 @@ df_replicated['Target'] = df_replicated['Target'] / num_months
 df['Start Year'] = df['Start Year'].fillna(0).astype(int)  # Replace NaN with 0 or any specific value
 
 # Handle non-finite values in 'Start Month' column
-df['Start Month'] = df['Start Month'].fillna('Unknown')
 
 # Create a 'Month-Year' column
 df['Month-Year'] = df['Start Month'] + ' ' + df['Start Year'].astype(str)
