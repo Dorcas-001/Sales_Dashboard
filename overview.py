@@ -51,7 +51,7 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 
 
 df = pd.concat([df0, df1, df4])
-df
+
 # Sidebar styling and logo
 st.markdown("""
     <style>
