@@ -43,8 +43,6 @@ df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 df1 = df1[df1['Start Year'] == 2024]
 df0 = df0[df0['Start Year'] == 2024]
 
-df = pd.merge(df0, df1, on='Client Name', how='inner')
-
 
 # Ensure the 'Start Date' column is in datetime format
 df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
@@ -52,7 +50,7 @@ df0['Start Date'] = pd.to_datetime(df0['Start Date'], errors='coerce')
 
 
 
-df = pd.concat([df, df4])
+df = pd.concat([df0, df1, df4])
 
 
 # Ensure the 'Start Date' column is in datetime format if needed

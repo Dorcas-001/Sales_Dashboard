@@ -31,13 +31,9 @@ st.markdown('<h1 class="main-title">CHANNEL VIEW</h1>', unsafe_allow_html=True)
 
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
-sheet_name1 ="ENDORSMENTS"
 # Read all sheets into a dictionary of DataFrames
-df0 = pd.read_excel(filepath, sheet_name=sheet_name)
-df1=pd.read_excel(filepath, sheet_name=sheet_name1)
+df = pd.read_excel(filepath, sheet_name=sheet_name)
 
-# Merge the tables on 'Client Name'
-df = pd.merge(df0, df1, on='Client Name', how='inner')
 
 # Sidebar styling and logo
 st.markdown("""

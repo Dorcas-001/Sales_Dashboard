@@ -32,13 +32,14 @@ st.markdown('<h1 class="main-title">KPI METRICS VIEW DASHBOARD</h1>', unsafe_all
 filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
 sheet_name1 ="ENDORSMENTS"
+sheet_name2= "ProActiv"
 sheet_name4="Target"
 # Read all sheets into a dictionary of DataFrames
 df0 = pd.read_excel(filepath, sheet_name=sheet_name)
 df1=pd.read_excel(filepath, sheet_name=sheet_name1)
+df2=pd.read_excel(filepath, sheet_name=sheet_name2)
 df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 
-df = pd.merge(df0, df1, on='Client Name', how='inner')
 
 
 
@@ -47,7 +48,7 @@ df1['Start Date'] = pd.to_datetime(df1['Start Date'], errors='coerce')
 # Filter rows where the Start Date is in 2024
 
 
-df = pd.concat([df, df4])
+df = pd.concat([df0, df1, df4])
 
 # Sidebar styling and logo
 st.markdown("""
@@ -328,7 +329,6 @@ if not df.empty:
     total_renewals = (df_renewals['Target'].sum())/scale
     total_pro_target = (df_proactiv_target['Target'].sum())/scale
     total_health_target = (df_health_target['Target'].sum())/scale
-    total_health_target
 
     # Calculate total premiums for specific combinations
     total_renew_2024 = (df_renew_2024['Total Premium'].sum())/scale

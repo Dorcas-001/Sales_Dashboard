@@ -35,8 +35,9 @@ sheet_name1 ="ENDORSMENTS"
 df0 = pd.read_excel(filepath, sheet_name=sheet_name)
 df1=pd.read_excel(filepath, sheet_name=sheet_name1)
 
-# Merge the tables on 'Client Name'
-df = pd.merge(df0, df1, on='Client Name', how='inner')
+
+
+df = pd.concat([df0, df1])
 
 
 # Ensure the 'Start Date' column is in datetime format if needed
