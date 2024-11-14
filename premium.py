@@ -32,18 +32,18 @@ filepath="WRITTEN PREMIUM 2024.xlsx"
 sheet_name = "NEW BUSINES"
 sheet_name1 ="ENDORSMENTS"
 sheet_name2= "ProActiv"
-sheet_name3="Monthly Sales"
 sheet_name4="Target"
 # Read all sheets into a dictionary of DataFrames
 df0 = pd.read_excel(filepath, sheet_name=sheet_name)
 df1=pd.read_excel(filepath, sheet_name=sheet_name1)
 df2=pd.read_excel(filepath, sheet_name=sheet_name2)
-df3=pd.read_excel(filepath, sheet_name=sheet_name3)
 df4=pd.read_excel(filepath, sheet_name=sheet_name4)
 
 # Filter rows where the Start Date is in 2024
 df1 = df1[df1['Start Year'] == 2024]
 df0 = df0[df0['Start Year'] == 2024]
+
+df = pd.merge(df0, df1, on='Client Name', how='inner')
 
 
 # Ensure the 'Start Date' column is in datetime format
@@ -52,7 +52,7 @@ df0['Start Date'] = pd.to_datetime(df0['Start Date'], errors='coerce')
 
 
 
-df = pd.concat([df0, df1, df4])
+df = pd.concat([df, df4])
 
 
 # Ensure the 'Start Date' column is in datetime format if needed
