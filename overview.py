@@ -124,27 +124,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# Create 2-column layout for date inputs
-col1, col2 = st.columns(2)
-
-# Function to display date input in styled boxes
-def display_date_input(col, title, default_date, min_date, max_date):
-    col.markdown(f"""
-        <div class="date-input-box">
-            <div class="date-input-title">{title}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
-
-# Display date inputs
-with col1:
-    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
-
-with col2:
-    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
-
-# Filter DataFrame based on the selected dates
-
 
 
 # Dictionary to map month names to their order
@@ -204,6 +183,28 @@ if not filter_description:
     filter_description = "All data"
 
 
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+
+
 
 
 # Calculate metrics
@@ -220,7 +221,7 @@ total_pro_target_ytd = df_proactiv_target_2024['Target'].sum() / scaling_factor
 total_health_target_ytd = df_health_target_2024['Target'].sum() / scaling_factor
 
 # Adjust the 'Target' column
-df['Target'] = df['Target'] * (10 / 12)
+df['Target'] = df['Target'] * (11 / 12)
 
 # Add a 'Month' column for filtering
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']

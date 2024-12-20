@@ -64,27 +64,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# Create 2-column layout for date inputs
-col1, col2 = st.columns(2)
-
-# Function to display date input in styled boxes
-def display_date_input(col, title, default_date, min_date, max_date):
-    col.markdown(f"""
-        <div class="date-input-box">
-            <div class="date-input-title">{title}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
-
-# Display date inputs
-with col1:
-    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
-
-with col2:
-    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
-
-# Filter DataFrame based on the selected dates
-df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
 
 
 # Sidebar styling and logo
@@ -199,6 +178,31 @@ if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
     filter_description = "All data"
+
+
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+df = df[(df["Start Date"] >= date1) & (df["Start Date"] <= date2)].copy()
+
+
 
 
 df['Start Year'] = df['Start Year'].astype(int)

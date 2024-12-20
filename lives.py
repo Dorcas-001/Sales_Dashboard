@@ -106,27 +106,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Create 2-column layout for date inputs
-col1, col2 = st.columns(2)
-
-# Function to display date input in styled boxes
-def display_date_input(col, title, default_date, min_date, max_date):
-    col.markdown(f"""
-        <div class="date-input-box">
-            <div class="date-input-title">{title}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
-
-# Display date inputs
-with col1:
-    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
-
-with col2:
-    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
-
-# Filter DataFrame based on the selected dates
-df = df[(df["START DATE"] >= date1) & (df["START DATE"] <= date2)].copy()
 
 
 # Dictionary to map month names to their order
@@ -155,37 +134,6 @@ client_name = st.sidebar.multiselect("Select Client Name", options=df['Client Na
 filtered_df = df
 
 
-# Create a 'Month-Year' column
-filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Date Year'].astype(str)
-
-
-# Function to sort month-year combinations
-def sort_key(month_year):
-    month, year = month_year.split()
-    return (int(year), month_order[month])
-
-# Extract unique month-year combinations and sort them
-month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
-
-# Select slider for month-year range
-selected_month_year_range = st.select_slider(
-    "Select Month-Year Range",
-    options=month_years,
-    value=(month_years[0], month_years[-1])
-)
-
-# Filter DataFrame based on selected month-year range
-start_month_year, end_month_year = selected_month_year_range
-start_month, start_year = start_month_year.split()
-end_month, end_year = end_month_year.split()
-
-start_index = (int(start_year), month_order[start_month])
-end_index = (int(end_year), month_order[end_month])
-
-# Filter DataFrame based on month-year order indices
-filtered_df = filtered_df[
-    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
-]
 
 
 # Apply filters to the DataFrame
@@ -223,6 +171,71 @@ if client_name:
     filter_description += f"{', '.join(client_name)} "
 if not filter_description:
     filter_description = "All data"
+
+
+# Create 2-column layout for date inputs
+col1, col2 = st.columns(2)
+
+# Function to display date input in styled boxes
+def display_date_input(col, title, default_date, min_date, max_date):
+    col.markdown(f"""
+        <div class="date-input-box">
+            <div class="date-input-title">{title}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    return col.date_input("", default_date, min_value=min_date, max_value=max_date)
+
+# Display date inputs
+with col1:
+    date1 = pd.to_datetime(display_date_input(col1, "Start Date", startDate, startDate, endDate))
+
+with col2:
+    date2 = pd.to_datetime(display_date_input(col2, "End Date", endDate, startDate, endDate))
+
+# Filter DataFrame based on the selected dates
+filtered_df = filtered_df[(filtered_df["Start Date"] >= date1) & (filtered_df["Start Date"] <= date2)].copy()
+
+
+
+filtered_df['Start Year'] = filtered_df['Start Year'].astype(int)
+
+# Create a 'Month-Year' column
+filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Year'].astype(str)
+
+
+
+# Create a 'Month-Year' column
+filtered_df['Month-Year'] = filtered_df['Start Month'] + ' ' + filtered_df['Start Year'].astype(str)
+
+
+# Function to sort month-year combinations
+def sort_key(month_year):
+    month, year = month_year.split()
+    return (int(year), month_order[month])
+
+# Extract unique month-year combinations and sort them
+month_years = sorted(filtered_df['Month-Year'].unique(), key=sort_key)
+
+# Select slider for month-year range
+selected_month_year_range = st.select_slider(
+    "Select Month-Year Range",
+    options=month_years,
+    value=(month_years[0], month_years[-1])
+)
+
+# Filter DataFrame based on selected month-year range
+start_month_year, end_month_year = selected_month_year_range
+start_month, start_year = start_month_year.split()
+end_month, end_year = end_month_year.split()
+
+start_index = (int(start_year), month_order[start_month])
+end_index = (int(end_year), month_order[end_month])
+
+# Filter DataFrame based on month-year order indices
+filtered_df = filtered_df[
+    filtered_df['Month-Year'].apply(lambda x: (int(x.split()[1]), month_order[x.split()[0]])).between(start_index, end_index)
+]
+
 
 
 filtered_df["Dependents"] = pd.to_numeric(filtered_df["Dependents"], errors='coerce').fillna(0).astype(int)
