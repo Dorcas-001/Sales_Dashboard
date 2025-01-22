@@ -221,7 +221,7 @@ total_pro_target_ytd = df_proactiv_target_2024['Target'].sum() / scaling_factor
 total_health_target_ytd = df_health_target_2024['Target'].sum() / scaling_factor
 
 # Adjust the 'Target' column
-df['Target'] = df['Target'] * (11 / 12)
+df['Target'] = df['Target'] * (12 / 12)
 
 # Add a 'Month' column for filtering
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October']
